@@ -1,0 +1,328 @@
+https://cloudflare-dns.com/dns-query
+https://dns.google/dns-query
+https://dns.quad9.net/dns-query
+https://doh.opendns.com/dns-query
+https://doh.cleanbrowsing.org/doh/family-filter
+https://chromium.dns.nextdns.io
+# ============================================
+# GOOGLE ECOSYSTEM
+# ============================================
+# Google Core Services
+[/google.com/]https://dns.google/dns-query
+[/google.com.vn/]https://dns.google/dns-query
+[/gstatic.com/]https://dns.google/dns-query
+[/googleapis.com/]https://dns.google/dns-query
+[/googleusercontent.com/]https://dns.google/dns-query
+[/googlevideo.com/]https://dns.google/dns-query
+[/youtube.com/]https://dns.google/dns-query
+[/youtu.be/]https://dns.google/dns-query
+[/ytimg.com/]https://dns.google/dns-query
+[/android.com/]https://dns.google/dns-query
+[/gmail.com/]https://dns.google/dns-query
+[/googlemail.com/]https://dns.google/dns-query
+[/googledrive.com/]https://dns.google/dns-query
+[/blogspot.com/]https://dns.google/dns-query
+[/blogger.com/]https://dns.google/dns-query
+# Google Infrastructure
+[/gvt1.com/]https://dns.google/dns-query
+[/gvt2.com/]https://dns.google/dns-query
+[/gvt3.com/]https://dns.google/dns-query
+[/ggpht.com/]https://dns.google/dns-query
+[/gstatic.cn/]https://dns.google/dns-query
+# Google Domains & Services
+[/googleblog.com/]https://dns.google/dns-query
+[/googlecode.com/]https://dns.google/dns-query
+[/googlecommerce.com/]https://dns.google/dns-query
+[/googlehosted.com/]https://dns.google/dns-query
+[/googletravelpartner.com/]https://dns.google/dns-query
+[/googlezip.net/]https://dns.google/dns-query
+[/googledns.com/]https://dns.google/dns-query
+[/googledomains.com/]https://dns.google/dns-query
+[/googlesource.com/]https://dns.google/dns-query
+[/g.co/]https://dns.google/dns-query
+[/goo.gl/]https://dns.google/dns-query
+# Google Web Platform
+[/recaptcha.net/]https://dns.google/dns-query
+[/ampproject.org/]https://dns.google/dns-query
+[/ampproject.net/]https://dns.google/dns-query
+# Google Open Source Projects
+[/chromium.org/]https://dns.google/dns-query
+[/polymer-project.org/]https://dns.google/dns-query
+[/tensorflow.org/]https://dns.google/dns-query
+[/tfhub.dev/]https://dns.google/dns-query
+[/web.dev/]https://dns.google/dns-query
+[/webrtc.org/]https://dns.google/dns-query
+[/getoutline.org/]https://dns.google/dns-query
+[/withgoogle.com/]https://dns.google/dns-query
+# Google Acquisitions
+[/firebaseio.com/]https://dns.google/dns-query
+[/waze.com/]https://dns.google/dns-query
+[/withyoutube.com/]https://dns.google/dns-query
+[/googletv.com/]https://dns.google/dns-query
+[/googlefiber.net/]https://dns.google/dns-query
+# ============================================
+# META / FACEBOOK ECOSYSTEM
+# ============================================
+[/facebook.com/]https://dns.google/dns-query
+[/fbcdn.net/]https://dns.google/dns-query
+[/fbcdn.com/]https://dns.google/dns-query
+[/fb.com/]https://dns.google/dns-query
+[/fbsbx.com/]https://dns.google/dns-query
+[/thefacebook.com/]https://dns.google/dns-query
+[/instagram.com/]https://dns.google/dns-query
+[/cdninstagram.com/]https://dns.google/dns-query
+[/threads.net/]https://dns.google/dns-query
+[/whatsapp.com/]https://dns.google/dns-query
+[/whatsapp.net/]https://dns.google/dns-query
+[/messenger.com/]https://dns.google/dns-query
+[/oculus.com/]https://dns.google/dns-query
+[/oculuscdn.com/]https://dns.google/dns-query
+[/oculusvr.com/]https://dns.google/dns-query
+# ============================================
+# TENCENT / WECHAT ECOSYSTEM
+# ============================================
+[/qq.com/]https://dns.google/dns-query
+[/gtimg.com/]https://dns.google/dns-query
+[/weixin.qq.com/]https://dns.google/dns-query
+[/myqcloud.com/]https://dns.google/dns-query
+[/tencent.com/]https://dns.google/dns-query
+[/qpic.cn/]https://dns.google/dns-query
+[/qcloud.com/]https://dns.google/dns-query
+# ============================================
+# BYTEDANCE / TIKTOK ECOSYSTEM
+# ============================================
+# TikTok (International)
+[/tiktok.com/]https://dns.google/dns-query
+[/tiktokcdn.com/]https://dns.google/dns-query
+[/tiktokv.com/]https://dns.google/dns-query
+[/tik-tokapi.com/]https://dns.google/dns-query
+[/tik-tokcdn.com/]https://dns.google/dns-query
+[/musical.ly/]https://dns.google/dns-query
+[/muscdn.com/]https://dns.google/dns-query
+# Douyin (China)
+[/douyin.com/]https://dns.google/dns-query
+[/douyincdn.com/]https://dns.google/dns-query
+[/douyinstatic.com/]https://dns.google/dns-query
+[/douyinpic.com/]https://dns.google/dns-query
+[/douyinvod.com/]https://dns.google/dns-query
+[/douyinliving.com/]https://dns.google/dns-query
+[/amemv.com/]https://dns.google/dns-query
+# ByteDance Infrastructure
+[/byteoversea.com/]https://dns.google/dns-query
+[/ibyteimg.com/]https://dns.google/dns-query
+[/bytefcdn-oversea.com/]https://dns.google/dns-query
+[/bytefcdn.com/]https://dns.google/dns-query
+[/bytedance.com/]https://dns.google/dns-query
+[/bytedns.net/]https://dns.google/dns-query
+[/snssdk.com/]https://dns.google/dns-query
+[/volcengine.com/]https://dns.google/dns-query
+# Toutiao (ByteDance News)
+[/toutiao.com/]https://dns.google/dns-query
+[/toutiaocdn.com/]https://dns.google/dns-query
+# ============================================
+# ALIBABA ECOSYSTEM
+# ============================================
+# Alibaba E-Commerce
+[/alibaba.com/]https://dns.google/dns-query
+[/alicdn.com/]https://dns.google/dns-query
+[/alicdn.net/]https://dns.google/dns-query
+[/taobao.com/]https://dns.google/dns-query
+[/tmall.com/]https://dns.google/dns-query
+[/aliexpress.com/]https://dns.google/dns-query
+[/alipay.com/]https://dns.google/dns-query
+# Alibaba Cloud / Aliyun
+[/aliyun.com/]https://dns.google/dns-query
+[/alibabacloud.com/]https://dns.google/dns-query
+[/aliyuncs.com/]https://dns.google/dns-query
+[/alikunlun.com/]https://dns.google/dns-query
+# ============================================
+# BILIBILI / CHINESE VIDEO
+# ============================================
+[/bilibili.com/]https://dns.google/dns-query
+[/bilivideo.com/]https://dns.google/dns-query
+[/hdslb.com/]https://dns.google/dns-query
+[/biliapi.net/]https://dns.google/dns-query
+# ============================================
+# TWITTER / X
+# ============================================
+[/twitter.com/]https://dns.google/dns-query
+[/x.com/]https://dns.google/dns-query
+[/twimg.com/]https://dns.google/dns-query
+[/t.co/]https://dns.google/dns-query
+# ============================================
+# APPLE ECOSYSTEM
+# ============================================
+[/apple.com/]https://dns.google/dns-query
+[/icloud.com/]https://dns.google/dns-query
+[/cdn-apple.com/]https://dns.google/dns-query
+[/mzstatic.com/]https://dns.google/dns-query
+[/apple-cloudkit.com/]https://dns.google/dns-query
+[/applemusic.com/]https://dns.google/dns-query
+# ============================================
+# DISCORD
+# ============================================
+[/discord.com/]https://dns.google/dns-query
+[/discordapp.com/]https://dns.google/dns-query
+[/discord.gg/]https://dns.google/dns-query
+[/discordapp.net/]https://dns.google/dns-query
+[/discord.media/]https://dns.google/dns-query
+[/discordstatus.com/]https://dns.google/dns-query
+[/dis.gd/]https://dns.google/dns-query
+# ============================================
+# SPOTIFY
+# ============================================
+[/spotify.com/]https://dns.google/dns-query
+[/scdn.co/]https://dns.google/dns-query
+[/spotifycdn.com/]https://dns.google/dns-query
+[/spoti.fi/]https://dns.google/dns-query
+# ============================================
+# AMAZON / AWS ECOSYSTEM
+# ============================================
+[/amazon.com/]https://doh.opendns.com/dns-query
+[/amazonaws.com/]https://doh.opendns.com/dns-query
+[/cloudfront.net/]https://doh.opendns.com/dns-query
+[/awsdns.com/]https://doh.opendns.com/dns-query
+[/awsdns-02.co.uk/]https://doh.opendns.com/dns-query
+[/awsdns-03.org/]https://doh.opendns.com/dns-query
+[/awsdns-04.net/]https://doh.opendns.com/dns-query
+[/awsglobalaccelerator.com/]https://doh.opendns.com/dns-query
+[/elasticbeanstalk.com/]https://doh.opendns.com/dns-query
+[/ssl-images-amazon.com/]https://doh.opendns.com/dns-query
+[/awstrack.me/]https://doh.opendns.com/dns-query
+[/awsmail.net/]https://doh.opendns.com/dns-query
+[/awsstatic.com/]https://doh.opendns.com/dns-query
+[/aws.dev/]https://doh.opendns.com/dns-query
+# ============================================
+# MICROSOFT ECOSYSTEM
+# ============================================
+[/microsoft.com/]https://doh.opendns.com/dns-query
+[/microsoftonline.com/]https://doh.opendns.com/dns-query
+[/sharepoint.com/]https://doh.opendns.com/dns-query
+[/bing.com/]https://doh.opendns.com/dns-query
+[/azureedge.net/]https://doh.opendns.com/dns-query
+[/azurefd.net/]https://doh.opendns.com/dns-query
+[/windows.net/]https://doh.opendns.com/dns-query
+[/office.com/]https://doh.opendns.com/dns-query
+[/office365.com/]https://doh.opendns.com/dns-query
+[/live.com/]https://doh.opendns.com/dns-query
+[/outlook.com/]https://doh.opendns.com/dns-query
+[/skype.com/]https://doh.opendns.com/dns-query
+[/msn.com/]https://doh.opendns.com/dns-query
+[/onenote.com/]https://doh.opendns.com/dns-query
+[/visualstudio.com/]https://doh.opendns.com/dns-query
+[/xbox.com/]https://doh.opendns.com/dns-query
+[/xboxlive.com/]https://doh.opendns.com/dns-query
+# ============================================
+# NETFLIX
+# ============================================
+[/netflix.com/]https://dns.google/dns-query
+[/netflix.net/]https://dns.google/dns-query
+[/nflxext.com/]https://dns.google/dns-query
+[/nflximg.net/]https://dns.google/dns-query
+[/nflxvideo.net/]https://dns.google/dns-query
+[/nflxso.net/]https://dns.google/dns-query
+[/fast.com/]https://dns.google/dns-query
+# ============================================
+# CLOUDFLARE SERVICES
+# ============================================
+[/cloudflare.com/]https://cloudflare-dns.com/dns-query
+[/one.one.one.one/]https://cloudflare-dns.com/dns-query
+[/cloudflare-dns.com/]https://cloudflare-dns.com/dns-query
+[/cdn.cloudflare.net/]https://cloudflare-dns.com/dns-query
+[/cfargotunnel.com/]https://cloudflare-dns.com/dns-query
+[/workers.dev/]https://cloudflare-dns.com/dns-query
+[/pages.dev/]https://cloudflare-dns.com/dns-query
+[/r2.dev/]https://cloudflare-dns.com/dns-query
+[/cf-ipfs.com/]https://cloudflare-dns.com/dns-query
+[/trycloudflare.com/]https://cloudflare-dns.com/dns-query
+[/cloudflarestream.com/]https://cloudflare-dns.com/dns-query
+[/cloudflareresolve.com/]https://cloudflare-dns.com/dns-query
+[/cloudflare.tv/]https://cloudflare-dns.com/dns-query
+# ============================================
+# AKAMAI CDN
+# ============================================
+[/akamai.net/]https://doh.opendns.com/dns-query
+[/akamaiedge.net/]https://doh.opendns.com/dns-query
+[/akamaihd.net/]https://doh.opendns.com/dns-query
+[/akamaized.net/]https://doh.opendns.com/dns-query
+[/akamaiorigin.net/]https://doh.opendns.com/dns-query
+[/akadns.net/]https://doh.opendns.com/dns-query
+[/akadns6.net/]https://doh.opendns.com/dns-query
+[/akadns99.net/]https://doh.opendns.com/dns-query
+[/edgekey.net/]https://doh.opendns.com/dns-query
+[/edgesuite.net/]https://doh.opendns.com/dns-query
+[/akamaigame.com/]https://doh.opendns.com/dns-query
+[/akamaistream.net/]https://doh.opendns.com/dns-query
+[/akamai-staging.net/]https://doh.opendns.com/dns-query
+[/akamaiedge-staging.net/]https://doh.opendns.com/dns-query
+[/akamai-access.com/]https://doh.opendns.com/dns-query
+[/akamaiorigin-secure.net/]https://doh.opendns.com/dns-query
+[/akamaitechnologies.com/]https://doh.opendns.com/dns-query
+[/akamaitechnologies.fr/]https://doh.opendns.com/dns-query
+[/akamaitech.net/]https://doh.opendns.com/dns-query
+[/akstat.io/]https://doh.opendns.com/dns-query
+[/liverail.com/]https://doh.opendns.com/dns-query
+# ============================================
+# FASTLY CDN
+# ============================================
+[/fastly.net/]https://doh.opendns.com/dns-query
+[/fastlylb.net/]https://doh.opendns.com/dns-query
+[/fastly-edge.com/]https://doh.opendns.com/dns-query
+# ============================================
+# BUNNY CDN
+# ============================================
+[/bunny.net/]https://doh.opendns.com/dns-query
+[/b-cdn.net/]https://doh.opendns.com/dns-query
+# ============================================
+# KEYCDN
+# ============================================
+[/kxcdn.com/]https://doh.opendns.com/dns-query
+[/keycdn.com/]https://doh.opendns.com/dns-query
+# ============================================
+# STACKPATH CDN
+# ============================================
+[/stackpathcdn.com/]https://doh.opendns.com/dns-query
+# ============================================
+# GAMING PLATFORMS
+# ============================================
+# Steam / Valve
+[/steampowered.com/]https://doh.opendns.com/dns-query
+[/steamstatic.com/]https://doh.opendns.com/dns-query
+[/steamcommunity.com/]https://doh.opendns.com/dns-query
+[/steamcontent.com/]https://doh.opendns.com/dns-query
+[/steamgames.com/]https://doh.opendns.com/dns-query
+[/valvesoftware.com/]https://doh.opendns.com/dns-query
+# Epic Games
+[/epicgames.com/]https://doh.opendns.com/dns-query
+[/unrealengine.com/]https://doh.opendns.com/dns-query
+# ============================================
+# STREAMING PLATFORMS
+# ============================================
+# Twitch
+[/twitch.tv/]https://doh.opendns.com/dns-query
+[/twitchcdn.net/]https://doh.opendns.com/dns-query
+[/jtvnw.net/]https://doh.opendns.com/dns-query
+# ============================================
+# E-COMMERCE SEA REGION
+# ============================================
+# Shopee
+[/shopee.vn/]https://doh.opendns.com/dns-query
+[/shopeemobile.com/]https://doh.opendns.com/dns-query
+# Lazada
+[/lazada.vn/]https://doh.opendns.com/dns-query
+# ============================================
+# GITHUB / MICROSOFT
+# ============================================
+[/github.com/]https://dns.google/dns-query
+[/githubusercontent.com/]https://dns.google/dns-query
+[/github.io/]https://dns.google/dns-query
+[/githubassets.com/]https://dns.google/dns-query
+[/githubapp.com/]https://dns.google/dns-query
+[/githubstatus.com/]https://dns.google/dns-query
+[/git.io/]https://dns.google/dns-query
+# ============================================
+# MỘT SỐ TRANG KHÁC
+# ============================================
+[/bibica.net/]https://cloudflare-dns.com/dns-query
+[/voz.vn/]https://cloudflare-dns.com/dns-query
+[/medium.com/]https://cloudflare-dns.com/dns-query
