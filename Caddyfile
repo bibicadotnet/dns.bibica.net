@@ -1,0 +1,6 @@
+:80 {
+    respond "Hello, world!"
+}
+
+# Import các file cấu hình riêng
+import /domain-config/*.conf
