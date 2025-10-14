@@ -6,8 +6,8 @@
 # USER CONFIGURATION
 # ==============================
 ALLOW_COUNTRIES=("VN" "SG")
-ALLOW_TCP_PORTS=("22" "443")
-ALLOW_UDP_PORTS=("443")
+ALLOW_TCP_PORTS=("2224" "443" "53")
+ALLOW_UDP_PORTS=("443" "53")
 
 # ALLOWLIST CONFIGURATION
 ALLOWLIST_URLS=("https://hetrixtools.com/resources/uptime-monitor-only-ips.txt" "https://www.cloudflare.com/ips-v4/")
@@ -56,7 +56,7 @@ cat > "$FIREWALL_SCRIPT" << 'EOFMAIN'
 set -euo pipefail
 
 ALLOW_COUNTRIES=(VN SG)
-ALLOW_TCP_PORTS=(22 443)
+ALLOW_TCP_PORTS=(2224 443)
 ALLOW_UDP_PORTS=(443)
 ALLOWLIST_URLS=("https://hetrixtools.com/resources/uptime-monitor-only-ips.txt" "https://www.cloudflare.com/ips-v4/")
 ALLOWLIST_IPS=("217.15.166.168")
@@ -347,5 +347,4 @@ echo "  • Reset:     $BACKUP_SCRIPT"
 echo ""
 echo "To modify: Edit $0 and run again"
 echo ""
-
 exit 0
