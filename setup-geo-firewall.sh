@@ -14,6 +14,7 @@ ALLOWLIST_URLS=(
     "https://hetrixtools.com/resources/uptime-monitor-only-ips.txt"
     "https://www.cloudflare.com/ips-v4/"
 )
+# Contabo Singapore Data Center - check-host.net
 ALLOWLIST_IPS=("217.15.166.168")
 
 # ==============================
@@ -340,6 +341,9 @@ build_chains() {
     iptables -A "$CHAIN_INPUT" -i lo -j ACCEPT
     iptables -A "$CHAIN_INPUT" -m conntrack --ctstate ESTABLISHED,RELATED -j ACCEPT
     iptables -A "$CHAIN_INPUT" -p icmp --icmp-type echo-request -j ACCEPT
+	
+	# Allow all internal Docker traffic 
+	iptables -A "$CHAIN_INPUT" -s 172.18.0.0/16 -j ACCEPT	
     
     if [[ $allowlist_count -gt 0 ]]; then
         for port in "${ALLOW_TCP_PORTS[@]}"; do
@@ -366,25 +370,47 @@ build_chains() {
     iptables -A "$CHAIN_INPUT" -j DROP
     
     log "✓ INPUT chain built"
-    
-    # DOCKER CHAIN
-    if command -v docker >/dev/null 2>&1; then
-        log "Building Docker chain..."
-        
-        iptables -N DOCKER-USER 2>/dev/null || true
-        iptables -N "$CHAIN_DOCKER"
-        
-        iptables -A "$CHAIN_DOCKER" -m conntrack --ctstate ESTABLISHED,RELATED -j RETURN
-        
-        if [[ $allowlist_count -gt 0 ]]; then
-            iptables -A "$CHAIN_DOCKER" -m set --match-set "$IPSET_ALLOWLIST" src -j RETURN
-        fi
-        
-        iptables -A "$CHAIN_DOCKER" -m set --match-set "$IPSET_COUNTRY" src -j RETURN
-        iptables -A "$CHAIN_DOCKER" -j DROP
-        
-        log "✓ Docker chain built"
-    fi
+
+	# DOCKER CHAIN - lọc theo port
+	if command -v docker >/dev/null 2>&1; then
+		log "Building Docker chain..."
+		
+		iptables -N DOCKER-USER 2>/dev/null || true
+		iptables -N "$CHAIN_DOCKER"
+		
+		# Allow internal Docker network traffic first
+		iptables -I "$CHAIN_DOCKER" 1 -s 172.18.0.0/16 -j RETURN
+		
+		iptables -A "$CHAIN_DOCKER" -m conntrack --ctstate ESTABLISHED,RELATED -j RETURN
+		
+		# Allowlist - specific ports only
+		if [[ $allowlist_count -gt 0 ]]; then
+			for port in "${ALLOW_TCP_PORTS[@]}"; do
+				iptables -A "$CHAIN_DOCKER" -p tcp --dport "$port" \
+					-m set --match-set "$IPSET_ALLOWLIST" src -j RETURN
+			done
+			
+			for port in "${ALLOW_UDP_PORTS[@]}"; do
+				iptables -A "$CHAIN_DOCKER" -p udp --dport "$port" \
+					-m set --match-set "$IPSET_ALLOWLIST" src -j RETURN
+			done
+		fi
+		
+		# Country - specific ports only
+		for port in "${ALLOW_TCP_PORTS[@]}"; do
+			iptables -A "$CHAIN_DOCKER" -p tcp --dport "$port" \
+				-m set --match-set "$IPSET_COUNTRY" src -j RETURN
+		done
+		
+		for port in "${ALLOW_UDP_PORTS[@]}"; do
+			iptables -A "$CHAIN_DOCKER" -p udp --dport "$port" \
+				-m set --match-set "$IPSET_COUNTRY" src -j RETURN
+		done
+		
+		iptables -A "$CHAIN_DOCKER" -j DROP
+		
+		log "✓ Docker chain built"
+	fi
 }
 
 # ==============================
