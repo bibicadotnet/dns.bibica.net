@@ -5,8 +5,8 @@ http:
   address: 0.0.0.0:80
   session_ttl: 720h
 users:
-  - name: xxxxxxxx
-    password: xxxxxxxxxxxxxxxxxx
+  - name: bibica
+    password: $2a$10$AQOoz6gcAyRwpPDyn/UEh.KiPHtrRo.G8jcy.arZjsc5srFoJxIse
 auth_attempts: 5
 block_auth_min: 15
 http_proxy: ""
@@ -17,7 +17,7 @@ dns:
     - 0.0.0.0
   port: 53
   anonymize_client_ip: false
-  ratelimit: 0
+  ratelimit: 20
   ratelimit_subnet_len_ipv4: 24
   ratelimit_subnet_len_ipv6: 56
   ratelimit_whitelist: []
