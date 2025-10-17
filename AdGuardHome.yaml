@@ -16,24 +16,29 @@ dns:
   bind_hosts:
     - 0.0.0.0
   port: 53
-  anonymize_client_ip: false
+  anonymize_client_ip: true
   ratelimit: 20
   ratelimit_subnet_len_ipv4: 24
   ratelimit_subnet_len_ipv6: 56
   ratelimit_whitelist: []
   refuse_any: true
   upstream_dns:
-    - https://cloudflare-dns.com/dns-query
-    - https://dns.quad9.net/dns-query
-    - '[/drive.usercontent.google.com/]https://dns.google/dns-query'
-    - '[/googlevideo.com/]https://dns.google/dns-query'
-    - '[/nflxvideo.net/]https://dns.google/dns-query'
+    - h3://8.8.4.4/dns-query
+    - h3://8.8.8.8/dns-query
+    - https://9.9.9.11/dns-query
+    - https://149.112.112.11/dns-query
+    - '# Github'
+    - '[/github.com/]https://1.1.1.1/dns-query'
+    - '[/githubcopilot.com/]https://1.1.1.1/dns-query'
+    - '[/githubusercontent.com/]https://1.1.1.1/dns-query'
+    - '[/github-cloud.s3.amazonaws.com/]https://1.1.1.1/dns-query'
+    - '[/githubassets.com/]https://1.1.1.1/dns-query'
   upstream_dns_file: ""
   bootstrap_dns:
+    - 1.1.1.1
     - 8.8.8.8
   fallback_dns:
-    - 94.140.14.14
-    - 94.140.15.15
+    - https://1.1.1.1/dns-query
   upstream_mode: parallel
   fastest_timeout: 1s
   allowed_clients: []
@@ -56,7 +61,7 @@ dns:
   aaaa_disabled: true
   enable_dnssec: false
   edns_client_subnet:
-    custom_ip: ""
+    custom_ip: 14.191.231.0
     enabled: true
     use_custom: false
   max_goroutines: 300
@@ -64,7 +69,7 @@ dns:
   ipset: []
   ipset_file: ""
   bootstrap_prefer_ipv6: false
-  upstream_timeout: 10s
+  upstream_timeout: 1s
   private_networks: []
   use_private_ptr_resolvers: false
   local_ptr_upstreams: []
@@ -94,15 +99,15 @@ tls:
 querylog:
   dir_path: ""
   ignored: []
-  interval: 2160h
+  interval: 24h
   size_memory: 1000
-  enabled: true
-  file_enabled: true
+  enabled: false
+  file_enabled: false
 statistics:
   dir_path: ""
   ignored: []
-  interval: 2160h
-  enabled: true
+  interval: 24h
+  enabled: false
 filters:
   - enabled: true
     url: https://adguardteam.github.io/HostlistsRegistry/assets/filter_16.txt
@@ -185,11 +190,11 @@ clients:
     hosts: true
   persistent: []
 log:
-  enabled: true
+  enabled: false
   file: ""
   max_backups: 0
-  max_size: 100
-  max_age: 3
+  max_size: 0
+  max_age: 0 
   compress: false
   local_time: false
   verbose: false
