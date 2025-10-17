@@ -51,7 +51,6 @@ dns:
     - 127.0.0.0/8
     - ::1/128
     - 172.16.0.0/12
-    - 172.16.0.0/12
   cache_enabled: true
   cache_size: 134217728
   cache_ttl_min: 0
@@ -61,7 +60,7 @@ dns:
   aaaa_disabled: true
   enable_dnssec: false
   edns_client_subnet:
-    custom_ip: 14.191.231.0
+    custom_ip: 
     enabled: true
     use_custom: false
   max_goroutines: 300
