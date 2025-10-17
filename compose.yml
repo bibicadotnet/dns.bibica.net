@@ -1,15 +1,16 @@
 services:
   caddy:
-    image: caddy:2.10.2-alpine
+    image: bibica/caddy-dns-cloudflare
     container_name: caddy
     restart: always
     networks:
       - reverse_proxy
     volumes:
-      - ./domain-config:/domain-config
       - ./Caddyfile:/etc/caddy/Caddyfile
       - ./caddy_data:/data
       - ./caddy_config:/config
+    environment:
+      - CLOUDFLARE_API_TOKEN=xxxxxxxxxxxxxxxxxxxxx
     ports:
       - 80:80
       - 443:443
@@ -26,7 +27,6 @@ services:
     volumes:
       - ./adguard/work:/opt/adguardhome/work
       - ./adguard/config:/opt/adguardhome/conf
-      - ./caddy_data:/caddy_data:ro
     logging:
       driver: "none"
 
