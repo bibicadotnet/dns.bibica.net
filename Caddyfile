@@ -1,5 +1,36 @@
-:80 {
-    respond "Hello, world!"
+{
+  # Use Cloudflare as the ACME DNS challenge provider for TLS certificate issuance
+  # Requires a valid Cloudflare API token with DNS edit permissions
+  acme_dns cloudflare {env.CLOUDFLARE_API_TOKEN}
 }
 
-import /domain-config/*.conf
+# Admin interface for AdGuard Home (restricted DNS access)
+admin.dns.bibica.net {
+    # Block all DoH (DNS-over-HTTPS) queries to prevent public DNS resolution via admin subdomain
+    handle /dns-query {
+        respond 403
+    }
+
+    # Proxy all other requests (e.g., web UI) to the AdGuard Home container
+    handle {
+        reverse_proxy adguardhome:80
+    }
+}
+
+# Public DNS-over-HTTPS endpoint
+dns.bibica.net {
+    # Health check endpoint for uptime monitoring
+    handle /health {
+        respond "OK" 200
+    }
+
+    # Forward DoH queries to AdGuard Home for resolution
+    handle /dns-query {
+        reverse_proxy adguardhome:80
+    }
+
+    # Redirect all other paths to the public info page
+    handle {
+        redir https://bibica.net/thu-nghiem-dns-mien-phi-tu-bibica-net/ 302
+    }
+}
