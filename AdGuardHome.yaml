@@ -25,6 +25,8 @@ dns:
   upstream_dns:
     - https://8.8.4.4/dns-query
     - https://8.8.8.8/dns-query
+    - https://9.9.9.11/dns-query
+    - https://149.112.112.11/dns-query    
     - '# Github'
     - '[/github.com/]https://1.1.1.1/dns-query'
     - '[/githubcopilot.com/]https://1.1.1.1/dns-query'
