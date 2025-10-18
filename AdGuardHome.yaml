@@ -23,10 +23,8 @@ dns:
   ratelimit_whitelist: []
   refuse_any: true
   upstream_dns:
-    - h3://8.8.4.4/dns-query
-    - h3://8.8.8.8/dns-query
-    - https://9.9.9.11/dns-query
-    - https://149.112.112.11/dns-query
+    - https://8.8.4.4/dns-query
+    - https://8.8.8.8/dns-query
     - '# Github'
     - '[/github.com/]https://1.1.1.1/dns-query'
     - '[/githubcopilot.com/]https://1.1.1.1/dns-query'
@@ -68,7 +66,7 @@ dns:
   ipset: []
   ipset_file: ""
   bootstrap_prefer_ipv6: false
-  upstream_timeout: 1s
+  upstream_timeout: 5s
   private_networks: []
   use_private_ptr_resolvers: false
   local_ptr_upstreams: []
