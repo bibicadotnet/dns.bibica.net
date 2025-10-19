@@ -9,3 +9,15 @@ https://chromium.dns.nextdns.io
 [/nflxvideo.net/]https://dns11.quad9.net/dns-query
 
 Edit TEST
+https://8.8.4.4/dns-query
+https://8.8.8.8/dns-query
+https://149.112.112.11/dns-query
+https://9.9.9.11/dns-query
+https://208.67.222.222/dns-query
+https://208.67.220.220/dns-query
+[/nikke-en.com/]172.18.0.4
+[/github.com/]172.18.0.4
+[/githubcopilot.com/]172.18.0.4
+[/githubusercontent.com/]172.18.0.4
+[/github-cloud.s3.amazonaws.com/]172.18.0.4
+[/githubassets.com/]172.18.0.4
