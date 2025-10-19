@@ -1,7 +1,7 @@
 #!/bin/bash
 # optimize-dns-turbo.sh
 
-API_URL="https://admin.dns.bibica.net"
+API_URL="http://172.18.0.3"
 AUTH='username_xxxxxxx:password_xxxxxxx'
 
 SUBNET="103.166.228.0/24"
