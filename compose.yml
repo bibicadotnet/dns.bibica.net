@@ -11,7 +11,7 @@ services:
       - ./caddy_data:/data
       - ./caddy_config:/config
     environment:
-      - CLOUDFLARE_API_TOKEN=xxxxxxxxxxxxxx
+      - CLOUDFLARE_API_TOKEN=xxxxxxxxxxxxxxx
     ports:
       - 80:80
       - 443:443
@@ -33,7 +33,7 @@ services:
       driver: "none"
 
   unbound:
-    image: mvance/unbound
+    image: klutchell/unbound
     container_name: unbound
     restart: always
     networks:
