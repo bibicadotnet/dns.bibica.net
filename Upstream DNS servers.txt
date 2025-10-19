@@ -7,3 +7,5 @@ https://chromium.dns.nextdns.io
 [/drive.usercontent.google.com/]https://dns11.quad9.net/dns-query
 [/googlevideo.com/]https://dns11.quad9.net/dns-query
 [/nflxvideo.net/]https://dns11.quad9.net/dns-query
+
+Edit TEST
