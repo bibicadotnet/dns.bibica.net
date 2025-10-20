@@ -3,7 +3,7 @@
 # ========================================
 clear
 $DOH_SERVER     = "https://dns.bibica.net/dns-query"
-$DOH_SERVER_CF  = "https://1.1.1.1/dns-query"
+$DOH_SERVER_CF  = "https://dns.google/dns-query"
 $DURATION       = "5s"
 $INSTALL_DIR    = "C:\dns-bibica-net"
 $OUTPUT_DIR     = "$INSTALL_DIR\results"
