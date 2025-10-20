@@ -11,14 +11,14 @@ services:
       - ./caddy_data:/data
       - ./caddy_config:/config
     environment:
-      - CLOUDFLARE_API_TOKEN=xxxxxxxxxxxxxxx
+      - CLOUDFLARE_API_TOKEN=XXXXXXXXXXXXXXXX
     ports:
       - 80:80
       - 443:443
       - 443:443/udp
     logging:
       driver: "none"
-      
+
   adguardhome:
     image: adguard/adguardhome
     container_name: adguardhome
@@ -29,16 +29,6 @@ services:
     volumes:
       - ./adguard/work:/opt/adguardhome/work
       - ./adguard/config:/opt/adguardhome/conf
-    logging:
-      driver: "none"
-
-  unbound:
-    image: klutchell/unbound
-    container_name: unbound
-    restart: always
-    networks:
-      reverse_proxy:
-        ipv4_address: 172.18.0.4
     logging:
       driver: "none"
 
