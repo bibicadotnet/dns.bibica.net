@@ -15,7 +15,7 @@ ALLOWLIST_URLS=(
     "https://www.cloudflare.com/ips-v4/"
 )
 # Contabo Singapore Data Center - check-host.net
-ALLOWLIST_IPS=("217.15.166.168" "103.166.228.36")
+ALLOWLIST_IPS=("217.15.166.168")
 
 # ==============================
 # SYSTEM CONFIGURATION
