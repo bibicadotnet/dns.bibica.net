@@ -489,8 +489,8 @@ Wants=network-online.target
 Type=oneshot
 ExecStart=$FIREWALL_SCRIPT
 RemainAfterExit=yes
-StandardOutput=journal
-StandardError=journal
+StandardOutput=null
+StandardError=null
 TimeoutStartSec=300
 
 [Install]
@@ -556,7 +556,7 @@ echo "  • ipset list $IPSET_COUNTRY"
 echo "  • ipset list $IPSET_ALLOWLIST"
 echo ""
 echo "Logs:"
-echo "  • journalctl -u geo-firewall"
+echo "  • Disabled for performance"
 echo ""
 
 exit 0
