@@ -1,4 +1,9 @@
 {
+  # Disable all logging for performance
+  log {
+    output discard
+  }
+  
   # Use Cloudflare as the ACME DNS challenge provider for TLS certificate issuance
   # Requires a valid Cloudflare API token with DNS edit permissions
   acme_dns cloudflare {env.CLOUDFLARE_API_TOKEN}
@@ -10,7 +15,6 @@ admin.dns.bibica.net {
     handle /dns-query {
         respond 403
     }
-
     # Proxy all other requests (e.g., web UI) to the AdGuard Home container
     handle {
         reverse_proxy adguardhome:80
@@ -23,12 +27,10 @@ dns.bibica.net {
     handle /health {
         respond "OK" 200
     }
-
     # Forward DoH queries to AdGuard Home for resolution
     handle /dns-query {
         reverse_proxy adguardhome:80
     }
-
     # Redirect all other paths to the public info page
     handle {
         redir https://bibica.net/thu-nghiem-dns-mien-phi-tu-bibica-net/ 302
