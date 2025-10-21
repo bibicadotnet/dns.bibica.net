@@ -15,6 +15,25 @@ $tempBackupFile = "$env:TEMP\dns-backup-temp.txt"
 
 Write-Host "Installing DNSCrypt-Proxy..." -ForegroundColor Cyan
 
+# Helper: Filter relevant physical/network adapters only
+function Get-RelevantAdapters {
+    Get-NetAdapter | Where-Object {
+        $_.Status -eq "Up" -and
+        $_.InterfaceDescription -notlike "*Loopback*" -and
+        $_.InterfaceDescription -notlike "*Tunnel*" -and
+        $_.InterfaceDescription -notlike "*ISATAP*" -and
+        $_.InterfaceDescription -notlike "*6TO4*" -and
+        $_.InterfaceDescription -notlike "*Bluetooth*" -and
+        $_.InterfaceDescription -notlike "*WSL*" -and
+        $_.InterfaceDescription -notlike "*Pseudo*" -and
+        $_.Name -notlike "*VMware*" -and
+        $_.Name -notlike "*VirtualBox*" -and
+        $_.Name -notlike "*Hyper-V*" -and
+        $_.Name -notlike "*Npcap*" -and
+        $_.Name -notlike "*Hamachi*"
+    }
+}
+
 # Check if already installed and backup exists
 $existingBackup = $null
 $isReinstall = $false
@@ -46,26 +65,20 @@ if (Test-Path $backupFile) {
 if (-not $isReinstall) {
     Write-Host "Backing up current DNS configuration..." -ForegroundColor Green
     $dnsBackup = @()
-    $adapters = Get-NetAdapter | Where-Object { $_.Status -eq "Up" }
+    $adapters = Get-RelevantAdapters
     foreach ($adapter in $adapters) {
         $dnsServers = (Get-DnsClientServerAddress -InterfaceIndex $adapter.ifIndex -AddressFamily IPv4 -ErrorAction SilentlyContinue).ServerAddresses
-        if ($dnsServers) {
-            # Check if DNS is empty or DHCP
-            $dnsString = if ($dnsServers.Count -eq 0 -or $null -eq $dnsServers[0] -or $dnsServers[0] -eq "") { 
-                "DHCP" 
-            } else { 
-                ($dnsServers -join ",") 
-            }
-            
-            $dnsBackup += [PSCustomObject]@{
-                Name = $adapter.Name
-                InterfaceIndex = $adapter.ifIndex
-                DNS = $dnsString
-            }
+        $dnsString = if ($null -eq $dnsServers -or $dnsServers.Count -eq 0 -or $dnsServers[0] -eq "") {
+            "DHCP"
+        } else {
+            ($dnsServers -join ",")
+        }
+        $dnsBackup += [PSCustomObject]@{
+            Name = $adapter.Name
+            InterfaceIndex = $adapter.ifIndex
+            DNS = $dnsString
         }
     }
-    
-    # Save backup to temp location
     $dnsBackup | Export-Csv -Path $tempBackupFile -NoTypeInformation -Encoding UTF8
 }
 
@@ -82,7 +95,6 @@ if (Test-Path $installPath) {
     $retryCount = 0
     $maxRetries = 5
     $removed = $false
-    
     while (-not $removed -and $retryCount -lt $maxRetries) {
         try {
             Remove-Item $installPath -Recurse -Force -ErrorAction Stop
@@ -112,11 +124,9 @@ Write-Host "Downloading latest release..." -ForegroundColor Green
 try {
     $release = Invoke-RestMethod "https://api.github.com/repos/DNSCrypt/dnscrypt-proxy/releases/latest" -ErrorAction Stop
     $asset = $release.assets | Where-Object { $_.name -like "dnscrypt-proxy-win64-*.zip" } | Select-Object -First 1
-    
     if (-not $asset) {
         throw "Cannot find Windows 64-bit release"
     }
-    
     $zipPath = "$tempPath\dnscrypt.zip"
     (New-Object System.Net.WebClient).DownloadFile($asset.browser_download_url, $zipPath)
 } catch {
@@ -151,7 +161,7 @@ Copy-Item $exePath.FullName "$installPath\dnscrypt-proxy.exe" -Force
 # Create config file
 @"
 listen_addresses = ['127.0.0.1:53']
-server_names = ['dns-bibica-net', 'quad9-doh']
+server_names = ['dns-bibica-net', 'cloudflare-gateway-dns']
 ipv4_servers = true
 ipv6_servers = false
 dnscrypt_servers = false
@@ -160,13 +170,12 @@ odoh_servers = false
 require_nolog = true
 require_nofilter = true
 require_dnssec = false
-timeout = 3000
+timeout = 5000
 keepalive = 30
 http3 = true
 http3_probe = true
-lb_strategy = 'first'
 cache = false
-log_level = 1
+log_level = 6
 bootstrap_resolvers = ['1.1.1.1:53']
 ignore_system_dns = true
 netprobe_timeout = 30
@@ -175,10 +184,6 @@ netprobe_address = '1.1.1.1:53'
 [static]
   [static.dns-bibica-net]
   stamp = 'sdns://AgAAAAAAAAAAAAAOZG5zLmJpYmljYS5uZXQKL2Rucy1xdWVyeQ'
-  
-  [static.quad9-doh]
-  stamp = 'sdns://AgYAAAAAAAAACDkuOS45LjExAA9kbnMxMS5xdWFkOS5uZXQKL2Rucy1xdWVyeQ'
-
 [sources]
 "@ | Out-File "$installPath\dnscrypt-proxy.toml" -Encoding UTF8
 
@@ -252,7 +257,6 @@ echo DNSCrypt-Proxy has been uninstalled.
 echo DNS settings have been restored to original configuration.
 echo.
 
-
 REM Self-delete the folder
 cd /d "%TEMP%"
 timeout /t 2 /nobreak >nul
@@ -274,14 +278,14 @@ Write-Host "Starting DNSCrypt-Proxy..." -ForegroundColor Green
 Start-Process $shortcutPath
 Start-Sleep -Seconds 2
 
-# Configure system DNS for ALL network adapters
+# Configure system DNS for relevant adapters only
 Write-Host "Configuring system DNS..." -ForegroundColor Green
-$adapters = Get-NetAdapter | Where-Object { $_.Status -eq "Up" }
-$updatedCount = 0
+$adapters = Get-RelevantAdapters
+$updatedAdapters = @()
 foreach ($adapter in $adapters) {
     try {
-        Set-DnsClientServerAddress -InterfaceIndex $adapter.ifIndex -ServerAddresses ("127.0.0.1") -ErrorAction Stop
-        $updatedCount++
+        Set-DnsClientServerAddress -InterfaceIndex $adapter.ifIndex -ServerAddresses "127.0.0.1" -ErrorAction Stop
+        $updatedAdapters += $adapter.Name
     } catch {
         # Silent fail
     }
@@ -298,9 +302,9 @@ if ($isReinstall) {
     Write-Host "DNSCrypt-Proxy installed successfully!" -ForegroundColor Green
 }
 Write-Host "========================================" -ForegroundColor Cyan
-Write-Host "`nDNS Server: 127.0.0.1"
-Write-Host "Primary: dns.bibica.net DoH"
-Write-Host "Backup: dns11.quad9.net DoH"
+Write-Host "`nDNS Server: 127.0.0.1:53"
+Write-Host "NameServer: DNS.BIBICA.NET DOH"
+#Write-Host "Backup: Cloudflare Gateway DOH"
 Write-Host "`nInstall path: $installPath"
 Write-Host "Config file: $installPath\dnscrypt-proxy.toml"
 Write-Host "Backup file: $backupFile"
@@ -309,8 +313,15 @@ if ($isReinstall) {
 }
 Write-Host "Uninstall: $installPath\uninstall.bat"
 Write-Host "Startup: Auto-start enabled"
-Write-Host "`nSystem DNS configured: $updatedCount adapter(s) updated" -ForegroundColor Yellow
-Write-Host "Using dns.bibica.net as primary DNS resolver" -ForegroundColor Green
+
+# Show actual adapters configured
+if ($updatedAdapters.Count -eq 0) {
+    Write-Host "`nSystem DNS configured: no applicable adapters found" -ForegroundColor Yellow
+} else {
+    Write-Host "`nSystem DNS configured on $($updatedAdapters.Count) adapter(s):" -ForegroundColor Yellow
+    $updatedAdapters | ForEach-Object { Write-Host "  - $_" -ForegroundColor Gray }
+}
+Write-Host "Using dns.bibica.net as DNS resolver" -ForegroundColor Green
 Write-Host "`nTo uninstall, run: $installPath\uninstall.bat" -ForegroundColor Cyan
 Write-Host "`nPress any key to exit..."
 $null = $Host.UI.RawUI.ReadKey("NoEcho,IncludeKeyDown")
