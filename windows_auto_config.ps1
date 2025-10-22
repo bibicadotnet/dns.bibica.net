@@ -15,22 +15,10 @@ $tempBackupFile = "$env:TEMP\dns-backup-temp.txt"
 
 Write-Host "Installing DNSCrypt-Proxy..." -ForegroundColor Cyan
 
-# Helper: Filter relevant physical/network adapters only
-function Get-RelevantAdapters {
+# === Get ALL adapters (including Disconnected), but exclude Loopback ===
+function Get-AllAdapters {
     Get-NetAdapter | Where-Object {
-        $_.Status -eq "Up" -and
-        $_.InterfaceDescription -notlike "*Loopback*" -and
-        $_.InterfaceDescription -notlike "*Tunnel*" -and
-        $_.InterfaceDescription -notlike "*ISATAP*" -and
-        $_.InterfaceDescription -notlike "*6TO4*" -and
-        $_.InterfaceDescription -notlike "*Bluetooth*" -and
-        $_.InterfaceDescription -notlike "*WSL*" -and
-        $_.InterfaceDescription -notlike "*Pseudo*" -and
-        $_.Name -notlike "*VMware*" -and
-        $_.Name -notlike "*VirtualBox*" -and
-        $_.Name -notlike "*Hyper-V*" -and
-        $_.Name -notlike "*Npcap*" -and
-        $_.Name -notlike "*Hamachi*"
+        $_.InterfaceDescription -notlike "*Loopback*"
     }
 }
 
@@ -39,12 +27,8 @@ $existingBackup = $null
 $isReinstall = $false
 if (Test-Path $backupFile) {
     $isReinstall = $true
-    
-    # Load existing backup to preserve original DNS settings
     $existingBackup = Import-Csv -Path $backupFile -Encoding UTF8
     Copy-Item $backupFile $tempBackupFile -Force
-    
-    # IMPORTANT: Restore DNS to original settings BEFORE removing files
     Write-Host "Restoring DNS to original settings..." -ForegroundColor Yellow
     foreach ($item in $existingBackup) {
         try {
@@ -61,11 +45,11 @@ if (Test-Path $backupFile) {
     Start-Sleep -Seconds 1
 }
 
-# Backup current DNS settings ONLY if this is a fresh install
+# Backup current DNS settings for ALL adapters (even Disconnected)
 if (-not $isReinstall) {
-    Write-Host "Backing up current DNS configuration..." -ForegroundColor Green
+    Write-Host "Backing up DNS for all network adapters (including disconnected)..." -ForegroundColor Green
     $dnsBackup = @()
-    $adapters = Get-RelevantAdapters
+    $adapters = Get-AllAdapters
     foreach ($adapter in $adapters) {
         $dnsServers = (Get-DnsClientServerAddress -InterfaceIndex $adapter.ifIndex -AddressFamily IPv4 -ErrorAction SilentlyContinue).ServerAddresses
         $dnsString = if ($null -eq $dnsServers -or $dnsServers.Count -eq 0 -or $dnsServers[0] -eq "") {
@@ -78,6 +62,7 @@ if (-not $isReinstall) {
             InterfaceIndex = $adapter.ifIndex
             DNS = $dnsString
         }
+        Write-Host "  Backed up: $($adapter.Name) ($($adapter.Status))" -ForegroundColor Gray
     }
     $dnsBackup | Export-Csv -Path $tempBackupFile -NoTypeInformation -Encoding UTF8
 }
@@ -87,10 +72,7 @@ Get-Process -Name "dnscrypt-proxy" -ErrorAction SilentlyContinue | Stop-Process 
 Get-WmiObject Win32_Process | Where-Object {$_.Name -eq "wscript.exe" -and $_.CommandLine -like "*dnscrypt-proxy.vbs*"} | ForEach-Object {$_.Terminate()}
 Start-Sleep -Seconds 1
 
-# Remove startup shortcut first
 if (Test-Path $shortcutPath) { Remove-Item $shortcutPath -Force }
-
-# Try to remove install path with retry
 if (Test-Path $installPath) {
     $retryCount = 0
     $maxRetries = 5
@@ -108,15 +90,10 @@ if (Test-Path $installPath) {
         }
     }
 }
-
-# Remove temp path
 if (Test-Path $tempPath) { Remove-Item $tempPath -Recurse -Force -ErrorAction SilentlyContinue }
 
-# Create directories
 New-Item -ItemType Directory -Path $installPath -Force | Out-Null
 New-Item -ItemType Directory -Path $tempPath -Force | Out-Null
-
-# Move backup to install path
 Move-Item $tempBackupFile $backupFile -Force
 
 # Download latest release
@@ -124,9 +101,7 @@ Write-Host "Downloading latest release..." -ForegroundColor Green
 try {
     $release = Invoke-RestMethod "https://api.github.com/repos/DNSCrypt/dnscrypt-proxy/releases/latest" -ErrorAction Stop
     $asset = $release.assets | Where-Object { $_.name -like "dnscrypt-proxy-win64-*.zip" } | Select-Object -First 1
-    if (-not $asset) {
-        throw "Cannot find Windows 64-bit release"
-    }
+    if (-not $asset) { throw "Cannot find Windows 64-bit release" }
     $zipPath = "$tempPath\dnscrypt.zip"
     (New-Object System.Net.WebClient).DownloadFile($asset.browser_download_url, $zipPath)
 } catch {
@@ -148,7 +123,6 @@ try {
     exit
 }
 
-# Find dnscrypt-proxy.exe recursively
 $exePath = Get-ChildItem -Path $tempPath -Filter "dnscrypt-proxy.exe" -Recurse | Select-Object -First 1
 if (-not $exePath) {
     Write-Host "ERROR: Cannot find dnscrypt-proxy.exe in extracted files!" -ForegroundColor Red
@@ -191,16 +165,13 @@ netprobe_address = '1.1.1.1:53'
 @"
 Set ws = CreateObject("WScript.Shell")
 Set objWMIService = GetObject("winmgmts:\\.\root\cimv2")
-
 On Error Resume Next
 Set colProcesses = objWMIService.ExecQuery("SELECT * FROM Win32_Process WHERE Name = 'dnscrypt-proxy.exe'")
 For Each objProcess in colProcesses
     objProcess.Terminate()
 Next
 On Error GoTo 0
-
 WScript.Sleep 1000
-
 ws.CurrentDirectory = "$installPath"
 ws.Run "dnscrypt-proxy.exe", 0, False
 "@ | Out-File "$installPath\dnscrypt-proxy.vbs" -Encoding ASCII
@@ -210,31 +181,16 @@ ws.Run "dnscrypt-proxy.exe", 0, False
 @echo off
 echo Uninstalling DNSCrypt-Proxy...
 echo.
-
-REM Check admin rights
 net session >nul 2>&1
 if %errorLevel% neq 0 (
     echo Requires administrator privileges. Restarting...
     powershell -Command "Start-Process '%~f0' -Verb RunAs"
     exit /b
 )
-
-REM Stop dnscrypt-proxy processes
-echo Stopping DNSCrypt-Proxy...
 taskkill /F /IM dnscrypt-proxy.exe 2>nul
-
-REM Stop VBS processes
-echo Stopping background processes...
 for /f "tokens=2" %%a in ('wmic process where "name='wscript.exe' and commandline like '%%dnscrypt-proxy.vbs%%'" get processid ^| findstr /r "[0-9]"') do taskkill /F /PID %%a 2>nul
-
 timeout /t 2 /nobreak >nul
-
-REM Remove startup shortcut
-echo Removing startup shortcut...
 del "$shortcutPath" 2>nul
-
-REM Restore DNS settings
-echo Restoring DNS settings...
 powershell -NoProfile -ExecutionPolicy Bypass -Command ^
 "`$backup = Import-Csv '$backupFile' -Encoding UTF8; ^
 foreach (`$item in `$backup) { ^
@@ -251,17 +207,13 @@ foreach (`$item in `$backup) { ^
         Write-Host '  Failed: ' `$item.Name; ^
     } ^
 }"
-
 echo.
 echo DNSCrypt-Proxy has been uninstalled.
 echo DNS settings have been restored to original configuration.
 echo.
-
-REM Self-delete the folder
 cd /d "%TEMP%"
 timeout /t 2 /nobreak >nul
 rmdir /s /q "$installPath" 2>nul
-
 exit
 "@ | Out-File "$installPath\uninstall.bat" -Encoding ASCII
 
@@ -278,9 +230,9 @@ Write-Host "Starting DNSCrypt-Proxy..." -ForegroundColor Green
 Start-Process $shortcutPath
 Start-Sleep -Seconds 2
 
-# Configure system DNS for relevant adapters only
-Write-Host "Configuring system DNS..." -ForegroundColor Green
-$adapters = Get-RelevantAdapters
+# Configure DNS on ALL adapters (including Disconnected)
+Write-Host "Configuring system DNS on all adapters..." -ForegroundColor Green
+$adapters = Get-AllAdapters
 $updatedAdapters = @()
 foreach ($adapter in $adapters) {
     try {
@@ -291,7 +243,6 @@ foreach ($adapter in $adapters) {
     }
 }
 
-# Cleanup temp
 Remove-Item $tempPath -Recurse -Force -ErrorAction SilentlyContinue
 
 # Display info
@@ -314,9 +265,8 @@ if ($isReinstall) {
 Write-Host "Uninstall: $installPath\uninstall.bat"
 Write-Host "Startup: Auto-start enabled"
 
-# Show actual adapters configured
 if ($updatedAdapters.Count -eq 0) {
-    Write-Host "`nSystem DNS configured: no applicable adapters found" -ForegroundColor Yellow
+    Write-Host "`nSystem DNS configured: no adapters found" -ForegroundColor Yellow
 } else {
     Write-Host "`nSystem DNS configured on $($updatedAdapters.Count) adapter(s):" -ForegroundColor Yellow
     $updatedAdapters | ForEach-Object { Write-Host "  - $_" -ForegroundColor Gray }
