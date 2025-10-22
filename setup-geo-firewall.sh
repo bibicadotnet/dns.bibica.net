@@ -6,8 +6,8 @@
 # USER CONFIGURATION
 # ==============================
 ALLOW_COUNTRIES=("VN")
-ALLOW_TCP_PORTS=("2224" "443")
-ALLOW_UDP_PORTS=("443")
+ALLOW_TCP_PORTS=("2224" "443" "53")
+ALLOW_UDP_PORTS=("443" "53")
 
 # ALLOWLIST CONFIGURATION
 ALLOWLIST_URLS=(
@@ -15,7 +15,7 @@ ALLOWLIST_URLS=(
     "https://www.cloudflare.com/ips-v4/"
 )
 # Contabo Singapore Data Center - check-host.net
-ALLOWLIST_IPS=("217.15.166.168")
+ALLOWLIST_IPS=("217.15.166.168" "3.1.4.246")
 
 # ==============================
 # SYSTEM CONFIGURATION
