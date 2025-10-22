@@ -161,7 +161,7 @@ Copy-Item $exePath.FullName "$installPath\dnscrypt-proxy.exe" -Force
 # Create config file
 @"
 listen_addresses = ['127.0.0.1:53']
-server_names = ['dns-bibica-net', 'cloudflare-gateway-dns']
+server_names = ['dns-bibica-net']
 ipv4_servers = true
 ipv6_servers = false
 dnscrypt_servers = false
@@ -180,7 +180,7 @@ bootstrap_resolvers = ['1.1.1.1:53']
 ignore_system_dns = true
 netprobe_timeout = 30
 netprobe_address = '1.1.1.1:53'
-
+#edns_client_subnet = ['103.186.65.0/24', '38.60.253.0/24', '38.54.117.0/24']
 [static]
   [static.dns-bibica-net]
   stamp = 'sdns://AgAAAAAAAAAAAAAOZG5zLmJpYmljYS5uZXQKL2Rucy1xdWVyeQ'
@@ -304,7 +304,6 @@ if ($isReinstall) {
 Write-Host "========================================" -ForegroundColor Cyan
 Write-Host "`nDNS Server: 127.0.0.1:53"
 Write-Host "NameServer: DNS.BIBICA.NET DOH"
-#Write-Host "Backup: Cloudflare Gateway DOH"
 Write-Host "`nInstall path: $installPath"
 Write-Host "Config file: $installPath\dnscrypt-proxy.toml"
 Write-Host "Backup file: $backupFile"
