@@ -24,7 +24,7 @@ dns:
   refuse_any: true
   upstream_dns:
     - https://8.8.4.4/dns-query
-    - https://8.8.8.8/dns-query
+    - https://149.112.112.11/dns-query
     - '[/nikke-en.com/]https://dns.mullvad.net/dns-query'
     - '[/github.com/]https://dns.mullvad.net/dns-query'
     - '[/githubcopilot.com/]https://dns.mullvad.net/dns-query'
@@ -33,10 +33,10 @@ dns:
     - '[/githubassets.com/]https://dns.mullvad.net/dns-query'
   upstream_dns_file: ""
   bootstrap_dns:
-    - 8.8.4.4
+    - 149.112.112.11
     - 8.8.8.8
   fallback_dns:
-    - https://9.9.9.11/dns-query
+    - https://1.1.1.1/dns-query
   upstream_mode: parallel
   fastest_timeout: 1s
   allowed_clients: []
@@ -167,6 +167,8 @@ filtering:
       answer: bibica.net
     - domain: '*.medium.com'
       answer: bibica.net
+    - domain: admin.dns.bibica.net
+      answer: 3.1.4.246
   safe_fs_patterns:
     - /opt/adguardhome/work/userfilters/*
   safebrowsing_cache_size: 1048576
@@ -181,11 +183,11 @@ filtering:
   protection_enabled: true
 clients:
   runtime_sources:
-    whois: true
-    arp: true
-    rdns: true
-    dhcp: true
-    hosts: true
+    whois: false
+    arp: false
+    rdns: false
+    dhcp: false
+    hosts: false
   persistent: []
 log:
   enabled: false
