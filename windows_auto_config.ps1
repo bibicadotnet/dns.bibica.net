@@ -236,7 +236,7 @@ $adapters = Get-AllAdapters
 $updatedAdapters = @()
 foreach ($adapter in $adapters) {
     try {
-        Set-DnsClientServerAddress -InterfaceIndex $adapter.ifIndex -ServerAddresses "127.0.0.1", "9.9.9.11" -ErrorAction Stop
+        Set-DnsClientServerAddress -InterfaceIndex $adapter.ifIndex -ServerAddresses "127.0.0.1" -ErrorAction Stop
         $updatedAdapters += $adapter.Name
     } catch {
         # Silent fail
@@ -255,7 +255,7 @@ if ($isReinstall) {
 Write-Host "========================================" -ForegroundColor Cyan
 Write-Host "`nDNS Server: 127.0.0.1:53"
 Write-Host "Primary: dns.bibica.net DoH"
-Write-Host "Backup: Quad9 (9.9.9.11)"
+#Write-Host "Backup: Quad9 (9.9.9.11)"
 Write-Host "`nInstall path: $installPath"
 Write-Host "Config file: $installPath\dnscrypt-proxy.toml"
 Write-Host "Backup file: $backupFile"
