@@ -62,7 +62,7 @@ if (-not $isReinstall) {
             InterfaceIndex = $adapter.ifIndex
             DNS = $dnsString
         }
-        Write-Host "  Backed up: $($adapter.Name) ($($adapter.Status))" -ForegroundColor Gray
+  #      Write-Host "  Backed up: $($adapter.Name) ($($adapter.Status))" -ForegroundColor Gray
     }
     $dnsBackup | Export-Csv -Path $tempBackupFile -NoTypeInformation -Encoding UTF8
 }
