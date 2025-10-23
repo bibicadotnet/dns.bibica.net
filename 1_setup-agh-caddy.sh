@@ -87,3 +87,10 @@ EOF
 hash -r
 
 echo "[+] Installation completed!"
+echo
+cat <<'EOF'
+
+[INFO] Shortcuts available:
+- Use 'caddy start|stop|restart|reload|status|logs' to control Caddy.
+- Use 'agh start|stop|restart|status|install|uninstall' to control AdGuard Home.
+EOF
