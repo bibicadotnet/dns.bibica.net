@@ -71,9 +71,6 @@ ExecStart=/usr/bin/caddy run --environ --config $CADDY_HOME/Caddyfile
 Environment=XDG_DATA_HOME=$CADDY_HOME
 EOF
 
-sudo systemctl daemon-reload
-sudo systemctl restart caddy
-
 # === Wrapper điều khiển Caddy ===
 sudo install -m 755 /dev/stdin /usr/local/bin/caddy <<'EOF'
 #!/bin/bash
@@ -83,14 +80,25 @@ case "$1" in
   stop)    exec sudo systemctl stop caddy ;;
   status)  exec systemctl status caddy ;;
   reload)  exec sudo systemctl reload caddy ;;
+  version)
+    # Lấy version và định dạng lại output
+    version_output=$(/usr/bin/caddy version)
+    # Tách phần version number (cột đầu tiên)
+    version_number=$(echo "$version_output" | awk '{print $1}')
+    echo "Caddy, version $version_number"
+    ;;
   *)       exec /usr/bin/caddy "$@" ;;
 esac
 EOF
-
 hash -r
+
+sudo systemctl daemon-reload
+sudo systemctl restart caddy
 
 echo
 echo "[+] Installation completed!"
+agh version
+caddy version
 echo
 cat <<'EOF'
 [INFO] Shortcuts available:
