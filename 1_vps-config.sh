@@ -32,7 +32,8 @@ fi
 
 # Essential applications list
 ESSENTIAL_APPS=(
-    curl wget git htop unzip nano zip zstd jq sudo python3 net-tools lsof iputils-ping chrony dnsutils
+    curl wget git htop unzip nano zip zstd jq sudo 
+    python3 net-tools lsof iputils-ping chrony bind9-dnsutils
 )
 
 # ========================================
@@ -172,17 +173,28 @@ EOF
     echo
 
     # Display installed software list
-    echo "[Installed Essential Software]"
-    installed_count=0
-    for app in "${ESSENTIAL_APPS[@]}"; do 
-        if command -v "$app" >/dev/null 2>&1 || dpkg -l | grep -q "^ii  $app "; then
-            echo -n "$app "
-            ((installed_count++))
-        fi
-    done
-    echo
-    echo "Total: $installed_count/${#ESSENTIAL_APPS[@]} applications installed"
-    echo
+	echo "[Installed Essential Software]"
+	installed_apps=()
+	mapfile -t installed_packages < <(apt list --installed 2>/dev/null | tail -n +2 | cut -d'/' -f1)
+
+	for app in "${ESSENTIAL_APPS[@]}"; do
+		for pkg in "${installed_packages[@]}"; do
+			if [[ "$pkg" == "$app" ]]; then
+				installed_apps+=("$app")
+				break
+			fi
+		done
+	done
+
+	if [ ${#installed_apps[@]} -eq 0 ]; then
+		echo "None"
+	else
+		for app in "${installed_apps[@]}"; do
+			echo "  - $app"
+		done
+	fi
+	echo "Total: ${#installed_apps[@]}/${#ESSENTIAL_APPS[@]} applications installed"
+	echo
 }
 
 # Check for --info parameter to only display information
@@ -345,27 +357,30 @@ echo "ClientAliveCountMax 3" >> "$SSH_CONFIG"
 systemctl restart sshd 2>/dev/null || true
 
 # ========================================
+# CREATE VPS COMMAND SHORTCUT
+# ========================================
+SCRIPT_PATH="$(readlink -f "${BASH_SOURCE[0]}")"
+ln -sf "$SCRIPT_PATH" /usr/local/bin/vps
+chmod +x /usr/local/bin/vps 2>/dev/null || true
+
+# ========================================
 # FINAL COMPLETION MESSAGE
 # ========================================
 
 show_system_info
 
-cat <<EOF
+# Define colors
+GREEN='\033[0;32m'
+YELLOW='\033[1;33m'
+NC='\033[0m' # No Color
 
-######################################################
-# CONFIGURATION COMPLETE
-# Please reboot to fully apply all settings (especially IPv6 and THP):
-#
-#         reboot now
-#
-# Please verify all configurations after reboot:
-# - Check if IPv6 is disabled
-# - Verify swap is active and correct size
-# - Confirm time synchronization is working
-# - Ensure DNS resolution works properly
-# - Verify THP is disabled
-# - Check that SSH timeout settings are applied
-#
-######################################################
-
-EOF
+echo -e "${GREEN}╔════════════════════════════════════════╗${NC}"
+echo -e "${GREEN}║          SYSTEM OPTIMIZATION COMPLETE  ║${NC}"
+echo -e "${GREEN}╚════════════════════════════════════════╝${NC}"
+echo
+echo -e "Reboot now to apply all settings:"
+echo -e "    ${YELLOW}reboot${NC}"
+echo
+echo -e "After reboot, verify configuration with:"
+echo -e "    ${YELLOW}vps --info${NC}"
+echo
