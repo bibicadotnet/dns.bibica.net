@@ -3,6 +3,9 @@
 # === AdGuard Home ===
 curl -sSL https://raw.githubusercontent.com/AdguardTeam/AdGuardHome/master/scripts/install.sh | sudo bash -s -- -v -o /home
 
+# Xóa file không cần thiết
+sudo rm -f /home/AdGuardHome/CHANGELOG.md /home/AdGuardHome/LICENSE.txt /home/AdGuardHome/README.md
+
 # Tạo script wrapper agh
 sudo tee /usr/local/bin/agh << 'EOF'
 #!/bin/bash
