@@ -23,8 +23,11 @@ fi
 # === Wrapper điều khiển AdGuard Home ===
 sudo install -m 755 /dev/stdin /usr/local/bin/agh <<'EOF'
 #!/bin/bash
-[ -x /home/AdGuardHome/AdGuardHome ] || { echo "AdGuardHome not found"; exit 1; }
-exec /home/AdGuardHome/AdGuardHome -s "$@"
+[ -x /home/AdGuardHome/AdGuardHome ] || { echo "Not found"; exit 1; }
+case "$1" in
+    version)      exec /home/AdGuardHome/AdGuardHome --version ;;
+    *)            exec /home/AdGuardHome/AdGuardHome -s "$@" ;;
+esac
 EOF
 
 # === Caddy + Plugin ===
@@ -90,6 +93,6 @@ echo "[+] Installation completed!"
 echo
 cat <<'EOF'
 [INFO] Shortcuts available:
-- Use 'caddy start|stop|restart|reload|status' to control Caddy.
-- Use 'agh start|stop|restart|status|install|uninstall' to control AdGuard Home.
+- Use 'caddy start|stop|restart|reload|status|version' to control Caddy.
+- Use 'agh start|stop|restart|reload|status|install|uninstall|version' to control AdGuard Home.
 EOF
