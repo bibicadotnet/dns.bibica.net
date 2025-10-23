@@ -44,6 +44,7 @@ case "$1" in
     stop)      exec sudo systemctl stop caddy ;;
     status)    exec systemctl status caddy ;;
     logs)      exec journalctl -u caddy -n 100 -f ;;
+    reload) exec sudo systemctl reload caddy ;;
     *)         exec /usr/bin/caddy "$@" ;;
 esac
 EOF
