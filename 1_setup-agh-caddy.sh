@@ -20,6 +20,7 @@ if [ -f /tmp/agh.yaml.bak ]; then
     sudo "$AGH_DIR/AdGuardHome" -s restart
 fi
 
+# === Wrapper điều khiển AdGuard Home ===
 sudo install -m 755 /dev/stdin /usr/local/bin/agh <<'EOF'
 #!/bin/bash
 [ -x /home/AdGuardHome/AdGuardHome ] || { echo "AdGuardHome not found"; exit 1; }
@@ -31,7 +32,6 @@ echo "[+] Installing Caddy..."
 sudo apt update
 sudo apt install -y debian-keyring debian-archive-keyring apt-transport-https curl gpg
 
-# 🔥 Sửa: xóa dấu cách thừa ở cuối URL
 curl -1sLf 'https://dl.cloudsmith.io/public/caddy/stable/gpg.key' | \
   sudo gpg --dearmor -o /usr/share/keyrings/caddy-stable-archive-keyring.gpg
 curl -1sLf 'https://dl.cloudsmith.io/public/caddy/stable/debian.deb.txt' | \
@@ -40,7 +40,7 @@ curl -1sLf 'https://dl.cloudsmith.io/public/caddy/stable/debian.deb.txt' | \
 sudo apt update && sudo apt install -y caddy
 sudo apt clean && sudo rm -rf /var/lib/apt/lists/*
 
-# Thêm plugin nếu hỗ trợ
+# Thêm plugin caddy dns cloudflare
 if caddy help | grep -q add-package; then
   caddy add-package github.com/caddy-dns/cloudflare || {
     echo "[-] Failed to install Cloudflare plugin" >&2
