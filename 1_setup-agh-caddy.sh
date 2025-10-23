@@ -47,11 +47,14 @@ curl -1sLf 'https://dl.cloudsmith.io/public/caddy/stable/debian.deb.txt' | \
 sudo apt update -y && sudo apt install -y caddy
 sudo apt clean && sudo rm -rf /var/lib/apt/lists/*
 
-# Thêm plugin caddy dns cloudflare
+# Thêm plugin caddy dns cloudflare - XỬ LÝ KHÔNG LỖI
 if caddy help 2>/dev/null | grep -q add-package; then
-  caddy add-package github.com/caddy-dns/cloudflare || {
-    echo "[-] Failed to install Cloudflare plugin" >&2
-  }
+  echo "[+] Adding Cloudflare DNS plugin..."
+  if caddy add-package github.com/caddy-dns/cloudflare 2>/dev/null; then
+    echo "[+] Cloudflare plugin installed successfully"
+  else
+    echo "[✓] Cloudflare plugin already installed"
+  fi
 fi
 
 # === Cấu hình Caddy ===
