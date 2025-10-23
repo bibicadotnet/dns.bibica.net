@@ -2,7 +2,6 @@
 set -euo pipefail
 
 # === AdGuard Home ===
-echo "[+] Installing AdGuardHome..."
 AGH_DIR="/home/AdGuardHome"
 CONFIG="$AGH_DIR/AdGuardHome.yaml"
 [ -f "$CONFIG" ] && sudo cp "$CONFIG" /tmp/agh.yaml.bak
@@ -31,7 +30,6 @@ esac
 EOF
 
 # === Caddy + Plugin ===
-echo "[+] Installing Caddy..."
 sudo apt update -y
 sudo apt install -y debian-keyring debian-archive-keyring apt-transport-https curl gpg
 
