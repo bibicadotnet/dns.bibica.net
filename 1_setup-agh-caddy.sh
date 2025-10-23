@@ -2,6 +2,7 @@
 set -euo pipefail
 
 # === AdGuard Home ===
+echo "[+] Installing AdGuardHome..."
 AGH_DIR="/home/AdGuardHome"
 CONFIG="$AGH_DIR/AdGuardHome.yaml"
 [ -f "$CONFIG" ] && sudo cp "$CONFIG" /tmp/agh.yaml.bak
@@ -30,25 +31,25 @@ esac
 EOF
 
 # === Caddy + Plugin ===
+echo "[+] Installing Caddy..."
 sudo apt update -y
 sudo apt install -y debian-keyring debian-archive-keyring apt-transport-https curl gpg
 
 # Xóa file cũ để tránh hỏi ghi đè
 sudo rm -f /usr/share/keyrings/caddy-stable-archive-keyring.gpg
-curl -1sLf 'https://dl.cloudsmith.io/public/caddy/stable/gpg.key  ' | \
+curl -1sLf 'https://dl.cloudsmith.io/public/caddy/stable/gpg.key' | \
   sudo gpg --batch --yes --dearmor -o /usr/share/keyrings/caddy-stable-archive-keyring.gpg
 
 # Ghi đè không hỏi
-curl -1sLf 'https://dl.cloudsmith.io/public/caddy/stable/debian.deb.txt  ' | \
+curl -1sLf 'https://dl.cloudsmith.io/public/caddy/stable/debian.deb.txt' | \
   sudo tee /etc/apt/sources.list.d/caddy-stable.list >/dev/null
 
 sudo apt update -y && sudo apt install -y caddy
+sudo apt clean && sudo rm -rf /var/lib/apt/lists/*
 
 # Thêm plugin caddy dns cloudflare
 caddy remove-package github.com/caddy-dns/cloudflare 2>/dev/null || true
 caddy add-package github.com/caddy-dns/cloudflare
-
-sudo apt clean && sudo rm -rf /var/lib/apt/lists/*
 
 # === Cấu hình Caddy ===
 CADDY_HOME="/home/caddy"
@@ -88,6 +89,7 @@ EOF
 
 hash -r
 
+echo
 echo "[+] Installation completed!"
 echo
 cat <<'EOF'
