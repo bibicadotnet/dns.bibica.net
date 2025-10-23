@@ -35,19 +35,22 @@ echo "[+] Installing Caddy..."
 sudo apt update -y
 sudo apt install -y debian-keyring debian-archive-keyring apt-transport-https curl gpg
 
+# Xóa file cũ để tránh hỏi ghi đè
+sudo rm -f /usr/share/keyrings/caddy-stable-archive-keyring.gpg
 curl -1sLf 'https://dl.cloudsmith.io/public/caddy/stable/gpg.key' | \
-  sudo gpg --dearmor --yes -o /usr/share/keyrings/caddy-stable-archive-keyring.gpg
+  sudo gpg --batch --yes --dearmor -o /usr/share/keyrings/caddy-stable-archive-keyring.gpg
+
+# Ghi đè không hỏi
 curl -1sLf 'https://dl.cloudsmith.io/public/caddy/stable/debian.deb.txt' | \
   sudo tee /etc/apt/sources.list.d/caddy-stable.list >/dev/null
 
-sudo apt update && sudo apt install -y caddy
+sudo apt update -y && sudo apt install -y caddy
 sudo apt clean && sudo rm -rf /var/lib/apt/lists/*
 
 # Thêm plugin caddy dns cloudflare
-if caddy help | grep -q add-package; then
+if caddy help 2>/dev/null | grep -q add-package; then
   caddy add-package github.com/caddy-dns/cloudflare || {
     echo "[-] Failed to install Cloudflare plugin" >&2
-    exit 1
   }
 fi
 
@@ -61,10 +64,10 @@ elif [ -f /etc/caddy/Caddyfile ]; then
   sudo rm -f /etc/caddy/Caddyfile
 fi
 
-sudo chown -R caddy:caddy "$CADDY_HOME"
+sudo chown -R caddy:caddy "$CADDY_HOME" 2>/dev/null || true
 
 sudo mkdir -p /etc/systemd/system/caddy.service.d
-cat <<EOF | sudo tee /etc/systemd/system/caddy.service.d/override.conf >/dev/null
+sudo tee /etc/systemd/system/caddy.service.d/override.conf >/dev/null <<EOF
 [Service]
 ExecStart=
 ExecStart=/usr/bin/caddy run --environ --config $CADDY_HOME/Caddyfile
