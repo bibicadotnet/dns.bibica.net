@@ -7,7 +7,7 @@ AGH_DIR="/home/AdGuardHome"
 CONFIG="$AGH_DIR/AdGuardHome.yaml"
 [ -f "$CONFIG" ] && sudo cp "$CONFIG" /tmp/agh.yaml.bak
 
-curl -sSL https://raw.githubusercontent.com/AdguardTeam/AdGuardHome/master/scripts/install.sh -o /tmp/agh.sh
+curl -sSL https://raw.githubusercontent.com/AdguardTeam/AdGuardHome/master/scripts/install.sh   -o /tmp/agh.sh
 sudo bash /tmp/agh.sh -v -o /home -r
 rm -f /tmp/agh.sh
 
@@ -37,25 +37,20 @@ sudo apt install -y debian-keyring debian-archive-keyring apt-transport-https cu
 
 # Xóa file cũ để tránh hỏi ghi đè
 sudo rm -f /usr/share/keyrings/caddy-stable-archive-keyring.gpg
-curl -1sLf 'https://dl.cloudsmith.io/public/caddy/stable/gpg.key' | \
+curl -1sLf 'https://dl.cloudsmith.io/public/caddy/stable/gpg.key  ' | \
   sudo gpg --batch --yes --dearmor -o /usr/share/keyrings/caddy-stable-archive-keyring.gpg
 
 # Ghi đè không hỏi
-curl -1sLf 'https://dl.cloudsmith.io/public/caddy/stable/debian.deb.txt' | \
+curl -1sLf 'https://dl.cloudsmith.io/public/caddy/stable/debian.deb.txt  ' | \
   sudo tee /etc/apt/sources.list.d/caddy-stable.list >/dev/null
 
 sudo apt update -y && sudo apt install -y caddy
-sudo apt clean && sudo rm -rf /var/lib/apt/lists/*
 
-# Thêm plugin caddy dns cloudflare - XỬ LÝ KHÔNG LỖI
-if caddy help 2>/dev/null | grep -q add-package; then
-  echo "[+] Adding Cloudflare DNS plugin..."
-  if caddy add-package github.com/caddy-dns/cloudflare 2>/dev/null; then
-    echo "[+] Cloudflare plugin installed successfully"
-  else
-    echo "[✓] Cloudflare plugin already installed"
-  fi
-fi
+# Thêm plugin caddy dns cloudflare
+caddy remove-package github.com/caddy-dns/cloudflare 2>/dev/null || true
+caddy add-package github.com/caddy-dns/cloudflare
+
+sudo apt clean && sudo rm -rf /var/lib/apt/lists/*
 
 # === Cấu hình Caddy ===
 CADDY_HOME="/home/caddy"
