@@ -32,8 +32,7 @@ fi
 
 # Essential applications list
 ESSENTIAL_APPS=(
-    curl wget git htop unzip nano zip zstd jq sudo 
-    python3 net-tools lsof iputils-ping chrony
+    curl wget git htop unzip nano zip zstd jq sudo python3 net-tools lsof iputils-ping chrony dnsutils
 )
 
 # ========================================
