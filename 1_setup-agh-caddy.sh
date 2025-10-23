@@ -1,34 +1,67 @@
 #!/bin/bash
+set -euo pipefail
 
 # === AdGuard Home ===
-curl -sSL https://raw.githubusercontent.com/AdguardTeam/AdGuardHome/master/scripts/install.sh | sudo bash -s -- -v -o /home
+echo "[+] Installing AdGuardHome..."
+AGH_DIR="/home/AdGuardHome"
+CONFIG="$AGH_DIR/AdGuardHome.yaml"
+[ -f "$CONFIG" ] && sudo cp "$CONFIG" /tmp/agh.yaml.bak
 
-# Xóa file không cần thiết
-sudo rm -f /home/AdGuardHome/CHANGELOG.md /home/AdGuardHome/LICENSE.txt /home/AdGuardHome/README.md
+curl -sSL https://raw.githubusercontent.com/AdguardTeam/AdGuardHome/master/scripts/install.sh -o /tmp/agh.sh
+sudo bash /tmp/agh.sh -v -o /home -r
+rm -f /tmp/agh.sh
 
-# Tạo script wrapper agh
-sudo tee /usr/local/bin/agh << 'EOF'
+sudo rm -f "$AGH_DIR"/{CHANGELOG.md,LICENSE.txt,README.md}
+
+if [ -f /tmp/agh.yaml.bak ]; then
+    sudo cp /tmp/agh.yaml.bak "$CONFIG"
+    sudo chmod 600 "$CONFIG"
+    rm -f /tmp/agh.yaml.bak
+    sudo "$AGH_DIR/AdGuardHome" -s restart
+fi
+
+sudo install -m 755 /dev/stdin /usr/local/bin/agh <<'EOF'
 #!/bin/bash
+[ -x /home/AdGuardHome/AdGuardHome ] || { echo "AdGuardHome not found"; exit 1; }
 exec /home/AdGuardHome/AdGuardHome -s "$@"
 EOF
-sudo chmod +x /usr/local/bin/agh
 
 # === Caddy + Plugin ===
-sudo apt install -y debian-keyring debian-archive-keyring apt-transport-https
-curl -1sLf 'https://dl.cloudsmith.io/public/caddy/stable/gpg.key' | sudo gpg --dearmor -o /usr/share/keyrings/caddy-stable-archive-keyring.gpg
-curl -1sLf 'https://dl.cloudsmith.io/public/caddy/stable/debian.deb.txt' | sudo tee /etc/apt/sources.list.d/caddy-stable.list
-sudo apt update && sudo apt install caddy -y
-caddy add-package github.com/caddy-dns/cloudflare
+echo "[+] Installing Caddy..."
+sudo apt update
+sudo apt install -y debian-keyring debian-archive-keyring apt-transport-https curl gpg
 
-# === Cấu hình Caddy dùng /home ===
+# 🔥 Sửa: xóa dấu cách thừa ở cuối URL
+curl -1sLf 'https://dl.cloudsmith.io/public/caddy/stable/gpg.key' | \
+  sudo gpg --dearmor -o /usr/share/keyrings/caddy-stable-archive-keyring.gpg
+curl -1sLf 'https://dl.cloudsmith.io/public/caddy/stable/debian.deb.txt' | \
+  sudo tee /etc/apt/sources.list.d/caddy-stable.list >/dev/null
+
+sudo apt update && sudo apt install -y caddy
+sudo apt clean && sudo rm -rf /var/lib/apt/lists/*
+
+# Thêm plugin nếu hỗ trợ
+if caddy help | grep -q add-package; then
+  caddy add-package github.com/caddy-dns/cloudflare || {
+    echo "[-] Failed to install Cloudflare plugin" >&2
+    exit 1
+  }
+fi
+
+# === Cấu hình Caddy ===
 CADDY_HOME="/home/caddy"
 sudo mkdir -p "$CADDY_HOME"
-sudo cp /etc/caddy/Caddyfile "$CADDY_HOME/"
+
+if [ ! -f "$CADDY_HOME/Caddyfile" ] && [ -f /etc/caddy/Caddyfile ]; then
+  sudo mv /etc/caddy/Caddyfile "$CADDY_HOME/Caddyfile"
+elif [ -f /etc/caddy/Caddyfile ]; then
+  sudo rm -f /etc/caddy/Caddyfile
+fi
+
 sudo chown -R caddy:caddy "$CADDY_HOME"
 
-# === Override systemd ===
 sudo mkdir -p /etc/systemd/system/caddy.service.d
-cat << EOF | sudo tee /etc/systemd/system/caddy.service.d/override.conf
+cat <<EOF | sudo tee /etc/systemd/system/caddy.service.d/override.conf >/dev/null
 [Service]
 ExecStart=
 ExecStart=/usr/bin/caddy run --environ --config $CADDY_HOME/Caddyfile
@@ -38,19 +71,19 @@ EOF
 sudo systemctl daemon-reload
 sudo systemctl restart caddy
 
-# Tạo script wrapper caddy
-sudo tee /usr/local/bin/caddy <<'EOF'
+# === Wrapper điều khiển Caddy ===
+sudo install -m 755 /dev/stdin /usr/local/bin/caddy <<'EOF'
 #!/bin/bash
 case "$1" in
-    restart)   exec sudo systemctl restart caddy ;;
-    start)     exec sudo systemctl start caddy ;;
-    stop)      exec sudo systemctl stop caddy ;;
-    status)    exec systemctl status caddy ;;
-    logs)      exec journalctl -u caddy -n 100 -f ;;
-    reload) exec sudo systemctl reload caddy ;;
-    *)         exec /usr/bin/caddy "$@" ;;
+  restart) exec sudo systemctl restart caddy ;;
+  start)   exec sudo systemctl start caddy ;;
+  stop)    exec sudo systemctl stop caddy ;;
+  status)  exec systemctl status caddy ;;
+  reload)  exec sudo systemctl reload caddy ;;
+  *)       exec /usr/bin/caddy "$@" ;;
 esac
 EOF
-sudo chmod +x /usr/local/bin/caddy
 
 hash -r
+
+echo "[+] Installation completed!"
