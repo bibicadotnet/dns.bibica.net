@@ -90,17 +90,20 @@ EOF
     fi
     echo
 
-    # Display swap configuration
-    echo "[Swap Configuration]"
-    if [ -f /swapfile ]; then
-        swap_size=$(ls -lh /swapfile | awk '{print $5}')
-        swap_used=$(swapon --show | awk '/\/swapfile/ {print $3}')
-        echo "Swap file: /swapfile ($swap_size)"
-        echo "Swap in use: $swap_used"
-    else
-        echo "No swap file configured"
-    fi
-    echo
+	# Display swap configuration
+	echo "[Swap Configuration]"
+	if swapon --show | grep -q '/dev/zram0'; then
+		zram_info=$(swapon --show | grep '/dev/zram0')
+		zram_size=$(echo "$zram_info" | awk '{print $3}')
+		zram_used=$(echo "$zram_info" | awk '{print $4}')
+		zram_algo=$(cat /sys/block/zram0/comp_algorithm 2>/dev/null | sed 's/.*\[\([^]]*\)\].*/\1/' || echo "unknown")
+		echo "ZRAM: /dev/zram0 ($zram_size)"
+		echo "Algorithm: $zram_algo"
+		echo "ZRAM in use: $zram_used"
+	else
+		echo "ZRAM: Not active"
+	fi
+	echo
 
     # Display DNS configuration
     echo "[DNS Configuration]"
@@ -264,29 +267,75 @@ systemctl start chrony 2>/dev/null || true
 systemctl enable chrony 2>/dev/null || true
 
 # ========================================
-# SWAP CREATION AND CONFIGURATION
+# ZRAM CONFIGURATION (MANUAL, NO zram-tools)
 # ========================================
 
-# Calculate swap size based on RAM
-RAM_GB=$(awk '/MemTotal/ {printf "%.0f", $2/1024/1024}' /proc/meminfo)
-SWAP_SIZE=$([ $RAM_GB -le 2 ] && echo "2G" || echo "4G")
+# Ensure zram module is loaded (safe to run multiple times)
+modprobe zram num_devices=1 2>/dev/null || true
 
-# Remove old swap if exists (idempotent)
+# Remove any existing swap on zram0
+if swapon --show=NAME | grep -q '/dev/zram0'; then
+    swapoff /dev/zram0
+fi
+echo 1 > /sys/block/zram0/reset 2>/dev/null || true
+
+# Determine best available algorithm
+ALGO="lz4"  # fallback
+if [ -f /sys/block/zram0/comp_algorithm ]; then
+    if grep -q 'zstd' /sys/block/zram0/comp_algorithm; then
+        ALGO="zstd"
+    elif grep -q 'lz4' /sys/block/zram0/comp_algorithm; then
+        ALGO="lz4"
+    fi
+fi
+
+# Configure zram
+echo "$ALGO" > /sys/block/zram0/comp_algorithm
+RAM_KB=$(awk '/MemTotal/ {print $2}' /proc/meminfo)
+ZRAM_SIZE_BYTES=$(( RAM_KB * 1024 / 2 ))  # 50% RAM
+echo $ZRAM_SIZE_BYTES > /sys/block/zram0/disksize
+
+# Activate
+mkswap /dev/zram0 >/dev/null
+swapon -p 100 /dev/zram0
+
+# Make it persistent after reboot
+cat <<EOF > /etc/systemd/system/zram-setup.service
+[Unit]
+Description=Setup zram swap (50% RAM, zstd if available)
+After=multi-user.target
+
+[Service]
+Type=oneshot
+RemainAfterExit=yes
+ExecStart=/bin/bash -c '
+  modprobe zram num_devices=1 || true
+  ALGO="lz4"
+  if [ -f /sys/block/zram0/comp_algorithm ] && grep -q zstd /sys/block/zram0/comp_algorithm; then ALGO="zstd"; fi
+  echo "\$ALGO" > /sys/block/zram0/comp_algorithm
+  RAM_KB=\$(awk "/MemTotal/ {print \\\$2}" /proc/meminfo)
+  SIZE=\$((RAM_KB * 1024 / 2))
+  echo "\$SIZE" > /sys/block/zram0/disksize
+  mkswap /dev/zram0 >/dev/null 2>&1
+  swapon -p 100 /dev/zram0'
+ExecStop=/bin/bash -c 'swapoff /dev/zram0 2>/dev/null || true; echo 1 > /sys/block/zram0/reset 2>/dev/null || true'
+
+[Install]
+WantedBy=multi-user.target
+EOF
+
+systemctl daemon-reload
+systemctl enable zram-setup.service
+
+# Clean up old swapfile
 swapoff /swapfile 2>/dev/null || true
 rm -f /swapfile
-sed -i '/\/swapfile/d' /etc/fstab
+sed -i '\|/swapfile|d' /etc/fstab
 
-# Create new swap
-fallocate -l $SWAP_SIZE /swapfile
-chmod 600 /swapfile
-mkswap /swapfile >/dev/null
-swapon /swapfile
-echo "/swapfile none swap sw 0 0" >> /etc/fstab
-
-# Memory optimization configuration (idempotent)
+# Memory tuning
 cat <<EOF > /etc/sysctl.d/99-memory-config.conf
-# Memory optimization
-vm.swappiness = 10
+vm.swappiness = 1
+vm.page-cluster = 0
 EOF
 sysctl -p /etc/sysctl.d/99-memory-config.conf >/dev/null 2>&1 || true
 
