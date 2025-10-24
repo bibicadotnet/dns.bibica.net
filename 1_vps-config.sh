@@ -91,17 +91,20 @@ EOF
     echo
 
 	# Display swap configuration
-	echo "[Swap Configuration]"
-	if swapon --show | grep -q '/dev/zram0'; then
-		zram_info=$(swapon --show | grep '/dev/zram0')
-		zram_size=$(echo "$zram_info" | awk '{print $3}')
-		zram_used=$(echo "$zram_info" | awk '{print $4}')
-		zram_algo=$(cat /sys/block/zram0/comp_algorithm 2>/dev/null | sed 's/.*\[\([^]]*\)\].*/\1/' || echo "unknown")
-		echo "ZRAM: /dev/zram0 ($zram_size)"
-		echo "Algorithm: $zram_algo"
-		echo "ZRAM in use: $zram_used"
+	echo "[ZRAM Configuration]"
+	if systemctl is-active zram-setup.service >/dev/null 2>&1; then
+		echo "Service: ACTIVE"
+		if [ -f /sys/block/zram0/comp_algorithm ]; then
+			algo=$(cat /sys/block/zram0/comp_algorithm | sed 's/.*\[\([^]]*\)\].*/\1/')
+			echo "Algorithm: $algo"
+		fi
+		if swapon --show | grep -q '/dev/zram0'; then
+			swap_info=$(swapon --show | grep '/dev/zram0')
+			echo "Size: $(echo "$swap_info" | awk '{print $3}')"
+			echo "Used: $(echo "$swap_info" | awk '{print $4}')"
+		fi
 	else
-		echo "ZRAM: Not active"
+		echo "Service: INACTIVE"
 	fi
 	echo
 
@@ -267,65 +270,51 @@ systemctl start chrony 2>/dev/null || true
 systemctl enable chrony 2>/dev/null || true
 
 # ========================================
-# ZRAM CONFIGURATION (MANUAL, NO zram-tools)
+# ZRAM CONFIGURATION (PERSISTENT, RELIABLE)
 # ========================================
 
-# Ensure zram module is loaded (safe to run multiple times)
+# Create zram setup script
+cat > /usr/local/bin/zram-setup.sh <<'EOF'
+#!/bin/bash
+set -euo pipefail
 modprobe zram num_devices=1 2>/dev/null || true
-
-# Remove any existing swap on zram0
-if swapon --show=NAME | grep -q '/dev/zram0'; then
+if swapon --show=NAME 2>/dev/null | grep -q '/dev/zram0'; then
     swapoff /dev/zram0
 fi
 echo 1 > /sys/block/zram0/reset 2>/dev/null || true
-
-# Determine best available algorithm
-ALGO="lz4"  # fallback
-if [ -f /sys/block/zram0/comp_algorithm ]; then
-    if grep -q 'zstd' /sys/block/zram0/comp_algorithm; then
-        ALGO="zstd"
-    elif grep -q 'lz4' /sys/block/zram0/comp_algorithm; then
-        ALGO="lz4"
-    fi
+ALGO="lz4"
+if [ -f /sys/block/zram0/comp_algorithm ] && grep -q 'zstd' /sys/block/zram0/comp_algorithm; then
+    ALGO="zstd"
 fi
-
-# Configure zram
 echo "$ALGO" > /sys/block/zram0/comp_algorithm
 RAM_KB=$(awk '/MemTotal/ {print $2}' /proc/meminfo)
-ZRAM_SIZE_BYTES=$(( RAM_KB * 1024 / 2 ))  # 50% RAM
-echo $ZRAM_SIZE_BYTES > /sys/block/zram0/disksize
-
-# Activate
+SIZE=$((RAM_KB * 1024 / 2))
+echo "$SIZE" > /sys/block/zram0/disksize
 mkswap /dev/zram0 >/dev/null
 swapon -p 100 /dev/zram0
+EOF
+chmod +x /usr/local/bin/zram-setup.sh
 
-# Make it persistent after reboot
-cat <<EOF > /etc/systemd/system/zram-setup.service
+# Create systemd service
+cat > /etc/systemd/system/zram-setup.service <<'EOF'
 [Unit]
 Description=Setup zram swap (50% RAM, zstd if available)
-After=multi-user.target
+DefaultDependencies=no
+After=systemd-modules-load.service
+Before=swap.target
 
 [Service]
 Type=oneshot
 RemainAfterExit=yes
-ExecStart=/bin/bash -c '
-  modprobe zram num_devices=1 || true
-  ALGO="lz4"
-  if [ -f /sys/block/zram0/comp_algorithm ] && grep -q zstd /sys/block/zram0/comp_algorithm; then ALGO="zstd"; fi
-  echo "\$ALGO" > /sys/block/zram0/comp_algorithm
-  RAM_KB=\$(awk "/MemTotal/ {print \\\$2}" /proc/meminfo)
-  SIZE=\$((RAM_KB * 1024 / 2))
-  echo "\$SIZE" > /sys/block/zram0/disksize
-  mkswap /dev/zram0 >/dev/null 2>&1
-  swapon -p 100 /dev/zram0'
-ExecStop=/bin/bash -c 'swapoff /dev/zram0 2>/dev/null || true; echo 1 > /sys/block/zram0/reset 2>/dev/null || true'
+ExecStart=/usr/local/bin/zram-setup.sh
+ExecStop=/bin/sh -c 'swapoff /dev/zram0 2>/dev/null || true; echo 1 > /sys/block/zram0/reset 2>/dev/null || true'
 
 [Install]
 WantedBy=multi-user.target
 EOF
 
 systemctl daemon-reload
-systemctl enable zram-setup.service
+systemctl enable --now zram-setup.service
 
 # Clean up old swapfile
 swapoff /swapfile 2>/dev/null || true
