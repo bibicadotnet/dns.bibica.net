@@ -24,7 +24,7 @@ dns:
   refuse_any: true
   upstream_dns:
     - https://8.8.4.4/dns-query
-    - https://149.112.112.11/dns-query
+    - https://8.8.8.8/dns-query
     - '[/nikke-en.com/]https://dns.mullvad.net/dns-query'
     - '[/github.com/]https://dns.mullvad.net/dns-query'
     - '[/githubcopilot.com/]https://dns.mullvad.net/dns-query'
@@ -36,8 +36,8 @@ dns:
     - 149.112.112.11
     - 8.8.8.8
   fallback_dns:
-    - https://1.1.1.1/dns-query
-  upstream_mode: parallel
+    - https://8.8.8.8/dns-query
+  upstream_mode: load_balance
   fastest_timeout: 1s
   allowed_clients: []
   disallowed_clients: []
@@ -65,9 +65,9 @@ dns:
   ipset: []
   ipset_file: ""
   bootstrap_prefer_ipv6: false
-  upstream_timeout: 5s
+  upstream_timeout: 3s
   private_networks: []
-  use_private_ptr_resolvers: true
+  use_private_ptr_resolvers: false
   local_ptr_upstreams: []
   use_dns64: false
   dns64_prefixes: []
