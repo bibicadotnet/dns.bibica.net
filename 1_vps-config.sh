@@ -40,7 +40,6 @@ EOF
 sysctl -p /etc/sysctl.d/99-optimizations.conf &>/dev/null || :
 
 timedatectl set-timezone Asia/Ho_Chi_Minh
-systemctl enable --now chrony &>/dev/null || :
 
 # === SWAPFILE ===
 RAM_GB=$(($(awk '/MemTotal/ {print $2}' /proc/meminfo) / 1024 / 1024))
