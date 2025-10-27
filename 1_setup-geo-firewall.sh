@@ -2,14 +2,14 @@
 # setup-geo-firewall.sh
 # GeoIP-based firewall with Docker support - production ready
 # Detect public IP
-PUBLIC_IP=$(curl -s --max-time 5 https://api.ipify.org https://ipv4.icanhazip.com https://ipecho.net/plain 2>/dev/null | head -n1)
+PUBLIC_IP=$(ip -4 route get 1.1.1.1 2>/dev/null | grep -oP 'src \K[\d.]+')
 
 # ==============================
 # USER CONFIGURATION
 # ==============================
 ALLOW_COUNTRIES=("VN")
-ALLOW_TCP_PORTS=("22" "2224" "80" "443" "53")
-ALLOW_UDP_PORTS=("80" "443" "53")
+ALLOW_TCP_PORTS=("2224" "443")
+ALLOW_UDP_PORTS=("443")
 
 # PING Configuration
 ENABLE_PING=false  # true
@@ -548,6 +548,12 @@ echo "  • TCP ports: ${ALLOW_TCP_PORTS[*]}"
 echo "  • UDP ports: ${ALLOW_UDP_PORTS[*]}"
 echo "  • Allowlist URLs: ${#ALLOWLIST_URLS[@]}"
 echo "  • Allowlist IPs: ${#ALLOWLIST_IPS[@]}"
+echo "  • Allowlist IPs: ${#ALLOWLIST_IPS[@]}"
+if [[ "$ENABLE_PING" == "true" ]]; then
+    echo "  • PING: Enabled (geo-filtered)"
+else
+    echo "  • PING: Disabled"
+fi
 echo ""
 echo "Docker Support:"
 echo "  • Rules applied to DOCKER-USER chain"
