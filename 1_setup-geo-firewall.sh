@@ -8,8 +8,11 @@ PUBLIC_IP=$(curl -s --max-time 5 https://api.ipify.org https://ipv4.icanhazip.co
 # USER CONFIGURATION
 # ==============================
 ALLOW_COUNTRIES=("VN")
-ALLOW_TCP_PORTS=("22" "2224" "443" "53")
-ALLOW_UDP_PORTS=("443" "53")
+ALLOW_TCP_PORTS=("22" "2224" "80" "443" "53")
+ALLOW_UDP_PORTS=("80" "443" "53")
+
+# PING Configuration
+ENABLE_PING=false  # true
 
 # ALLOWLIST CONFIGURATION
 ALLOWLIST_URLS=(
@@ -200,6 +203,7 @@ ALLOW_TCP_PORTS=()
 ALLOW_UDP_PORTS=()
 ALLOWLIST_URLS=()
 ALLOWLIST_IPS=()
+ENABLE_PING=false
 
 # Chain/IPSet names
 CHAIN_INPUT="GEO_INPUT"
@@ -342,7 +346,14 @@ build_chains() {
     
     iptables -A "$CHAIN_INPUT" -i lo -j ACCEPT
     iptables -A "$CHAIN_INPUT" -m conntrack --ctstate ESTABLISHED,RELATED -j ACCEPT
-    iptables -A "$CHAIN_INPUT" -p icmp --icmp-type echo-request -j ACCEPT
+	if [[ "$ENABLE_PING" == "true" ]]; then
+		if [[ $allowlist_count -gt 0 ]]; then
+			iptables -A "$CHAIN_INPUT" -p icmp --icmp-type echo-request \
+				-m set --match-set "$IPSET_ALLOWLIST" src -j ACCEPT
+		fi
+		iptables -A "$CHAIN_INPUT" -p icmp --icmp-type echo-request \
+			-m set --match-set "$IPSET_COUNTRY" src -j ACCEPT
+	fi
 	
 	# Allow all internal Docker traffic 
 	iptables -A "$CHAIN_INPUT" -s 172.18.0.0/16 -j ACCEPT	
@@ -473,6 +484,7 @@ sed -i "/^ALLOW_TCP_PORTS=()/ c\ALLOW_TCP_PORTS=($(printf '"%s" ' "${ALLOW_TCP_P
 sed -i "/^ALLOW_UDP_PORTS=()/ c\ALLOW_UDP_PORTS=($(printf '"%s" ' "${ALLOW_UDP_PORTS[@]}") )" "$FIREWALL_SCRIPT"
 sed -i "/^ALLOWLIST_URLS=()/ c\ALLOWLIST_URLS=($(printf '"%s" ' "${ALLOWLIST_URLS[@]}") )" "$FIREWALL_SCRIPT"
 sed -i "/^ALLOWLIST_IPS=()/ c\ALLOWLIST_IPS=($(printf '"%s" ' "${ALLOWLIST_IPS[@]}") )" "$FIREWALL_SCRIPT"
+sed -i "/^ENABLE_PING=/ c\ENABLE_PING=\"$ENABLE_PING\"" "$FIREWALL_SCRIPT"
 
 chmod +x "$FIREWALL_SCRIPT"
 
