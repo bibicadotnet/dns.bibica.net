@@ -216,6 +216,7 @@ try {
 listen_addresses = ['127.0.0.1:53']
 server_names = ['dns-bibica-net']
 ipv4_servers = true
+force_tcp = true
 doh_servers = true
 require_nolog = true
 require_nofilter = true
@@ -227,7 +228,8 @@ dnscrypt_servers = false
 cache = false
 timeout = 200
 keepalive = 10
-log_level = 6
+log_level = 2
+log_file = 'dnscrypt-proxy.log'
 bootstrap_resolvers = ['1.1.1.1:53', '8.8.8.8:53']
 netprobe_address = '1.1.1.1:53'
 netprobe_timeout = 30
