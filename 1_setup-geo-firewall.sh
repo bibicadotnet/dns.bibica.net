@@ -2,7 +2,7 @@
 # setup-geo-firewall.sh
 # GeoIP-based firewall with Docker support - production ready
 # Detect public IP
-PUBLIC_IP=$(ip -4 route get 1.1.1.1 2>/dev/null | grep -oP 'src \K[\d.]+')
+PUBLIC_IP=$(curl -s https://api.ipify.org)
 
 # ==============================
 # USER CONFIGURATION
