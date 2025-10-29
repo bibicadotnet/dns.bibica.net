@@ -216,21 +216,21 @@ try {
 listen_addresses = ['127.0.0.1:53']
 server_names = ['dns-bibica-net']
 ipv4_servers = true
-ipv6_servers = false
-dnscrypt_servers = false
 doh_servers = true
-odoh_servers = false
 require_nolog = true
 require_nofilter = true
+ignore_system_dns = true
 require_dnssec = false
-timeout = 200
-keepalive = 10
+odoh_servers = false
+ipv6_servers = false
+dnscrypt_servers = false
 cache = false
+timeout = 5000
+keepalive = 10
 log_level = 6
 bootstrap_resolvers = ['1.1.1.1:53', '8.8.8.8:53']
-ignore_system_dns = true
-netprobe_timeout = 30
 netprobe_address = '1.1.1.1:53'
+netprobe_timeout = 30
 #edns_client_subnet = ['103.186.65.0/24', '38.60.253.0/24', '38.54.117.0/24']
 [static]
   [static.dns-bibica-net]
