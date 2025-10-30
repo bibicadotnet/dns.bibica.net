@@ -221,9 +221,9 @@ upstream:
 bootstrap:
   - 1.1.1.1:53
   - 8.8.8.8:53
-timeout: 5s
+edns: true
 cache: true
-cache-size: 131072
+cache-size: 134217728
 cache-optimistic: true
 "@ | Out-File "$dnsproxyPath\config.yaml" -Encoding UTF8
 
