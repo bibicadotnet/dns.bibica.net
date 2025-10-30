@@ -7,27 +7,25 @@ Clear-Host
 
 # Configuration
 $installPath = "C:\dns-bibica-net-doh"
-$dnscryptPath = "$installPath\dnscrypt-proxy"
+$dnsproxyPath = "$installPath\dnsproxy"
 $goodbyedpiPath = "$installPath\GoodbyeDPI"
-$tempPath = "$env:TEMP\dnscrypt-setup"
+$tempPath = "$env:TEMP\dnsproxy-setup"
 $backupFile = "$installPath\dns-backup.txt"
 $tempBackupFile = "$env:TEMP\dns-backup-temp.txt"
 
 Write-Host "dns.bibica.net DoH & DPI bypass - Auto Installer" -ForegroundColor Cyan
 Write-Host ""
 
-# === Unload WinDivert Driver (để xóa được WinDivert64.sys) ===
+# === Unload WinDivert Driver ===
 function Unload-WinDivertDriver {
     param([string]$InstallPath)
     
     $sysFile = "$InstallPath\GoodbyeDPI\WinDivert64.sys"
     if (-not (Test-Path $sysFile)) { return }
     
-    # Kill GoodbyeDPI process
     Get-Process -Name "goodbyedpi" -ErrorAction SilentlyContinue | Stop-Process -Force
     Start-Sleep -Milliseconds 500
     
-    # Stop và xóa tất cả WinDivert services
     Get-Service -Name "WinDivert*" -ErrorAction SilentlyContinue | ForEach-Object {
         Stop-Service -Name $_.Name -Force -ErrorAction SilentlyContinue
         sc.exe delete $_.Name 2>$null | Out-Null
@@ -37,7 +35,6 @@ function Unload-WinDivertDriver {
     sc.exe delete WinDivert 2>$null | Out-Null
     Start-Sleep -Milliseconds 500
     
-    # Thử xóa file
     for ($i = 1; $i -le 5; $i++) {
         try {
             Remove-Item $sysFile -Force -ErrorAction Stop
@@ -47,7 +44,6 @@ function Unload-WinDivertDriver {
         }
     }
     
-    # Mark để xóa lúc reboot nếu cần
     if (Test-Path $sysFile) {
         try {
             $pendingOps = "HKLM:\SYSTEM\CurrentControlSet\Control\Session Manager"
@@ -112,12 +108,12 @@ if (-not $isReinstall) {
 
 # Cleanup previous installation
 Write-Host "Removing previous installation..." -ForegroundColor Gray
-Get-Process -Name "dnscrypt-proxy" -ErrorAction SilentlyContinue | Stop-Process -Force
+Get-Process -Name "dnsproxy" -ErrorAction SilentlyContinue | Stop-Process -Force
 Get-Process -Name "goodbyedpi" -ErrorAction SilentlyContinue | Stop-Process -Force
 Get-WmiObject Win32_Process | Where-Object {$_.Name -eq "wscript.exe" -and $_.CommandLine -like "*dns-bibica-net-startup.vbs*"} | ForEach-Object {$_.Terminate()}
 
-Stop-Service -Name "DNSCrypt-Proxy" -Force -ErrorAction SilentlyContinue
-sc.exe delete "DNSCrypt-Proxy" 2>$null | Out-Null
+Stop-Service -Name "DNSProxy" -Force -ErrorAction SilentlyContinue
+sc.exe delete "DNSProxy" 2>$null | Out-Null
 
 Unload-WinDivertDriver -InstallPath $installPath
 
@@ -144,31 +140,34 @@ if (Test-Path $installPath) {
 if (Test-Path $tempPath) { Remove-Item $tempPath -Recurse -Force -ErrorAction SilentlyContinue }
 
 New-Item -ItemType Directory -Path $installPath -Force | Out-Null
-New-Item -ItemType Directory -Path $dnscryptPath -Force | Out-Null
+New-Item -ItemType Directory -Path $dnsproxyPath -Force | Out-Null
 New-Item -ItemType Directory -Path $goodbyedpiPath -Force | Out-Null
 New-Item -ItemType Directory -Path $tempPath -Force | Out-Null
 if (Test-Path $tempBackupFile) {
     Move-Item $tempBackupFile $backupFile -Force
 }
 
-# ==================== Download DNSCrypt-Proxy ====================
-Write-Host "Downloading DNSCrypt-Proxy..." -ForegroundColor Gray
+# ==================== Download AdGuard DNSProxy ====================
+Write-Host "Downloading AdGuard DNSProxy..." -ForegroundColor Gray
 try {
-    $release = Invoke-RestMethod "https://api.github.com/repos/DNSCrypt/dnscrypt-proxy/releases/latest" -ErrorAction Stop
-    $asset = $release.assets | Where-Object { $_.name -like "dnscrypt-proxy-win64-*.zip" } | Select-Object -First 1
+    $release = Invoke-RestMethod "https://api.github.com/repos/AdguardTeam/dnsproxy/releases/latest" -ErrorAction Stop
+    $asset = $release.assets | Where-Object { $_.name -like "dnsproxy-windows-amd64-*.zip" } | Select-Object -First 1
     if (-not $asset) { throw "Cannot find Windows 64-bit release" }
     
-    $zipPath = "$tempPath\dnscrypt.zip"
+    $zipPath = "$tempPath\dnsproxy.zip"
     (New-Object System.Net.WebClient).DownloadFile($asset.browser_download_url, $zipPath)
     
     Add-Type -AssemblyName System.IO.Compression.FileSystem
     [System.IO.Compression.ZipFile]::ExtractToDirectory($zipPath, $tempPath)
     
-    $exePath = Get-ChildItem -Path $tempPath -Filter "dnscrypt-proxy.exe" -Recurse | Select-Object -First 1
-    if (-not $exePath) { throw "Cannot find dnscrypt-proxy.exe" }
-    Copy-Item $exePath.FullName "$dnscryptPath\dnscrypt-proxy.exe" -Force
+    $exePath = Get-ChildItem -Path $tempPath -Filter "dnsproxy.exe" -Recurse | Select-Object -First 1
+    if (-not $exePath) { 
+        $exePath = Get-ChildItem -Path $tempPath -Filter "windows-amd64\dnsproxy.exe" -Recurse | Select-Object -First 1
+    }
+    if (-not $exePath) { throw "Cannot find dnsproxy.exe" }
+    Copy-Item $exePath.FullName "$dnsproxyPath\dnsproxy.exe" -Force
 } catch {
-    Write-Host "ERROR: Failed to download DNSCrypt-Proxy" -ForegroundColor Red
+    Write-Host "ERROR: Failed to download AdGuard DNSProxy" -ForegroundColor Red
     Write-Host $_.Exception.Message -ForegroundColor Red
     Read-Host "Press Enter to exit"
     exit
@@ -211,33 +210,24 @@ try {
 
 # ==================== Create Config Files ====================
 
-# DNSCrypt-Proxy config
+# AdGuard DNSProxy config
 @"
-listen_addresses = ['127.0.0.1:53']
-server_names = ['dns-bibica-net']
-ipv4_servers = true
-force_tcp = true
-doh_servers = true
-require_nolog = true
-require_nofilter = true
-ignore_system_dns = true
-require_dnssec = false
-odoh_servers = false
-ipv6_servers = false
-dnscrypt_servers = false
-cache = false
-timeout = 5000
-keepalive = 0
-log_level = 2
-log_file = 'dnscrypt-proxy.log'
-bootstrap_resolvers = ['1.1.1.1:53', '8.8.8.8:53']
-netprobe_address = '1.1.1.1:53'
-netprobe_timeout = 30
-#edns_client_subnet = ['103.186.65.0/24', '38.60.253.0/24', '38.54.117.0/24']
-[static]
-  [static.dns-bibica-net]
-  stamp = 'sdns://AgAAAAAAAAAAAAAOZG5zLmJpYmljYS5uZXQKL2Rucy1xdWVyeQ'
-"@ | Out-File "$dnscryptPath\dnscrypt-proxy.toml" -Encoding UTF8
+listen-addrs:
+  - 127.0.0.1
+listen-ports:
+  - 53
+upstream:
+  - https://dns.bibica.net/dns-query
+bootstrap:
+  - 1.1.1.1:53
+  - 8.8.8.8:53
+timeout: 5s
+cache: true
+cache-size: 131072
+cache-optimistic: true
+"@ | Out-File "$dnsproxyPath\config.yaml" -Encoding UTF8
+
+New-Item -ItemType File -Path "$dnsproxyPath\dnsproxy.log" -Force | Out-Null
 
 # Create VBS startup launcher
 @"
@@ -246,7 +236,7 @@ Set objWMIService = GetObject("winmgmts:\\.\root\cimv2")
 
 ' Terminate existing processes
 On Error Resume Next
-Set colProcesses = objWMIService.ExecQuery("SELECT * FROM Win32_Process WHERE Name = 'dnscrypt-proxy.exe' OR Name = 'goodbyedpi.exe'")
+Set colProcesses = objWMIService.ExecQuery("SELECT * FROM Win32_Process WHERE Name = 'dnsproxy.exe' OR Name = 'goodbyedpi.exe'")
 For Each objProcess in colProcesses
     objProcess.Terminate()
 Next
@@ -260,9 +250,9 @@ ws.Run "goodbyedpi.exe -9", 0, False
 
 WScript.Sleep 2000
 
-' Start DNSCrypt-Proxy
-ws.CurrentDirectory = "$dnscryptPath"
-ws.Run "dnscrypt-proxy.exe", 0, False
+' Start AdGuard DNSProxy
+ws.CurrentDirectory = "$dnsproxyPath"
+ws.Run "dnsproxy.exe --config-path=config.yaml --output=dnsproxy.log", 0, False
 "@ | Out-File "$installPath\dns-bibica-net-startup.vbs" -Encoding ASCII
 
 # Create uninstall.bat
@@ -280,7 +270,7 @@ if %errorLevel% neq 0 (
 )
 
 echo Stopping services...
-taskkill /F /IM dnscrypt-proxy.exe >nul 2>&1
+taskkill /F /IM dnsproxy.exe >nul 2>&1
 taskkill /F /IM goodbyedpi.exe >nul 2>&1
 for /f "tokens=2" %%a in ('wmic process where "name='wscript.exe' and commandline like '%%dns-bibica-net-startup.vbs%%'" get processid 2^>nul ^| findstr /r "[0-9]"') do taskkill /F /PID %%a >nul 2>&1
 
@@ -377,7 +367,7 @@ Remove-Item $tempPath -Recurse -Force -ErrorAction SilentlyContinue
 
 # Verify services
 Start-Sleep -Seconds 2
-$dnscryptRunning = Get-Process -Name "dnscrypt-proxy" -ErrorAction SilentlyContinue
+$dnsproxyRunning = Get-Process -Name "dnsproxy" -ErrorAction SilentlyContinue
 $goodbyedpiRunning = Get-Process -Name "goodbyedpi" -ErrorAction SilentlyContinue
 
 # Display result
@@ -387,7 +377,7 @@ Write-Host "Installation complete!" -ForegroundColor Green
 Write-Host "========================================" -ForegroundColor Cyan
 Write-Host ""
 
-if ($dnscryptRunning -and $goodbyedpiRunning) {
+if ($dnsproxyRunning -and $goodbyedpiRunning) {
     Write-Host "System DNS changed to:" -ForegroundColor White
     Write-Host "  127.0.0.1 (dns.bibica.net DoH + DPI bypass)" -ForegroundColor White
     Write-Host ""
