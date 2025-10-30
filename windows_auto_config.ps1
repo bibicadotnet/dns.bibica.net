@@ -221,7 +221,6 @@ upstream:
 bootstrap:
   - 1.1.1.1:53
   - 8.8.8.8:53
-edns: true
 cache: true
 cache-size: 134217728
 cache-optimistic: true
