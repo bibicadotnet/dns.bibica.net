@@ -11,206 +11,263 @@ $dnsproxyPath = "$installPath\dnsproxy"
 $goodbyedpiPath = "$installPath\GoodbyeDPI"
 $tempPath = "$env:TEMP\dnsproxy-setup"
 $backupFile = "$installPath\dns-backup.txt"
-$tempBackupFile = "$env:TEMP\dns-backup-temp.txt"
+$startupPath = "$env:APPDATA\Microsoft\Windows\Start Menu\Programs\Startup"
+$startupShortcut = "$startupPath\dns-bibica-net.lnk"
 
 Write-Host "dns.bibica.net DoH & DPI bypass - Auto Installer" -ForegroundColor Cyan
 Write-Host ""
 
-# === Unload WinDivert Driver ===
+# ==================== Functions ====================
+
+function Stop-AllServices {
+    @("dnsproxy", "goodbyedpi") | ForEach-Object {
+        Get-Process -Name $_ -ErrorAction SilentlyContinue | Stop-Process -Force
+    }
+    Get-WmiObject Win32_Process | Where-Object {
+        $_.Name -eq "wscript.exe" -and $_.CommandLine -like "*dns-bibica-net-startup.vbs*"
+    } | ForEach-Object { $_.Terminate() }
+}
+
+function Wait-ProcessStopped {
+    param([string[]]$ProcessNames, [int]$TimeoutSeconds = 3)
+    
+    $stopwatch = [System.Diagnostics.Stopwatch]::StartNew()
+    while ($stopwatch.Elapsed.TotalSeconds -lt $TimeoutSeconds) {
+        $running = Get-Process -Name $ProcessNames -ErrorAction SilentlyContinue
+        if (-not $running) { return $true }
+        Start-Sleep -Milliseconds 200
+    }
+    return $false
+}
+
+function Wait-ProcessStarted {
+    param([string[]]$ProcessNames, [int]$TimeoutSeconds = 5)
+    
+    $stopwatch = [System.Diagnostics.Stopwatch]::StartNew()
+    while ($stopwatch.Elapsed.TotalSeconds -lt $TimeoutSeconds) {
+        $allRunning = $true
+        foreach ($name in $ProcessNames) {
+            if (-not (Get-Process -Name $name -ErrorAction SilentlyContinue)) {
+                $allRunning = $false
+                break
+            }
+        }
+        if ($allRunning) { return $true }
+        Start-Sleep -Milliseconds 300
+    }
+    return $false
+}
+
+function Test-LocalDNS {
+    param([int]$TimeoutSeconds = 5)
+    
+    try {
+        $result = Resolve-DnsName -Name "google.com" -Server "127.0.0.1" -DnsOnly -ErrorAction Stop -QuickTimeout
+        return ($null -ne $result)
+    } catch {
+        return $false
+    }
+}
+
 function Unload-WinDivertDriver {
-    param([string]$InstallPath)
-    
-    $sysFile = "$InstallPath\GoodbyeDPI\WinDivert64.sys"
-    if (-not (Test-Path $sysFile)) { return }
-    
-    Get-Process -Name "goodbyedpi" -ErrorAction SilentlyContinue | Stop-Process -Force
-    Start-Sleep -Milliseconds 500
-    
     Get-Service -Name "WinDivert*" -ErrorAction SilentlyContinue | ForEach-Object {
         Stop-Service -Name $_.Name -Force -ErrorAction SilentlyContinue
         sc.exe delete $_.Name 2>$null | Out-Null
     }
-    
     sc.exe stop WinDivert 2>$null | Out-Null
     sc.exe delete WinDivert 2>$null | Out-Null
-    Start-Sleep -Milliseconds 500
-    
-    for ($i = 1; $i -le 5; $i++) {
-        try {
-            Remove-Item $sysFile -Force -ErrorAction Stop
-            break
-        } catch {
-            if ($i -lt 5) { Start-Sleep -Milliseconds 300 }
-        }
-    }
-    
-    if (Test-Path $sysFile) {
-        try {
-            $pendingOps = "HKLM:\SYSTEM\CurrentControlSet\Control\Session Manager"
-            $currentValue = (Get-ItemProperty -Path $pendingOps -Name "PendingFileRenameOperations" -ErrorAction SilentlyContinue).PendingFileRenameOperations
-            if ($null -eq $currentValue) { $currentValue = @() }
-            $currentValue += "\??\$sysFile"
-            $currentValue += ""
-            Set-ItemProperty -Path $pendingOps -Name "PendingFileRenameOperations" -Value $currentValue -Type MultiString -ErrorAction SilentlyContinue
-        } catch {}
-    }
 }
 
-# === Get ALL adapters (excluding Loopback) ===
 function Get-AllAdapters {
-    Get-NetAdapter | Where-Object {
-        $_.InterfaceDescription -notlike "*Loopback*"
-    }
+    Get-NetAdapter | Where-Object { $_.InterfaceDescription -notlike "*Loopback*" }
 }
 
-# Check if already installed
-$existingBackup = $null
-$isReinstall = $false
-if (Test-Path $backupFile) {
-    $isReinstall = $true
-    $existingBackup = Import-Csv -Path $backupFile -Encoding UTF8
-    Copy-Item $backupFile $tempBackupFile -Force
-    
-    Write-Host "Restoring original DNS settings..." -ForegroundColor Gray
-    foreach ($item in $existingBackup) {
-        try {
-            $dnsServers = $item.DNS -split ','
-            if ($dnsServers[0] -eq 'DHCP' -or $dnsServers[0] -eq '') {
-                Set-DnsClientServerAddress -InterfaceIndex $item.InterfaceIndex -ResetServerAddresses -ErrorAction Stop
-            } else {
-                Set-DnsClientServerAddress -InterfaceIndex $item.InterfaceIndex -ServerAddresses $dnsServers -ErrorAction Stop
-            }
-        } catch {}
-    }
-    Start-Sleep -Seconds 1
-}
-
-# Backup current DNS settings
-if (-not $isReinstall) {
-    Write-Host "Backing up current DNS settings..." -ForegroundColor Gray
-    $dnsBackup = @()
+function Set-FallbackDNS {
+    Write-Host "  Setting fallback DNS (Google 8.8.8.8 & Cloudflare 1.1.1.1)..." -ForegroundColor Yellow
     $adapters = Get-AllAdapters
     foreach ($adapter in $adapters) {
-        $dnsServers = (Get-DnsClientServerAddress -InterfaceIndex $adapter.ifIndex -AddressFamily IPv4 -ErrorAction SilentlyContinue).ServerAddresses
-        $dnsString = if ($null -eq $dnsServers -or $dnsServers.Count -eq 0 -or $dnsServers[0] -eq "") {
-            "DHCP"
-        } else {
-            ($dnsServers -join ",")
-        }
-        $dnsBackup += [PSCustomObject]@{
-            Name = $adapter.Name
-            InterfaceIndex = $adapter.ifIndex
-            DNS = $dnsString
-        }
+        try {
+            Set-DnsClientServerAddress -InterfaceIndex $adapter.ifIndex -ServerAddresses @("8.8.8.8", "1.1.1.1") -ErrorAction Stop
+        } catch {}
     }
-    $dnsBackup | Export-Csv -Path $tempBackupFile -NoTypeInformation -Encoding UTF8
 }
 
-# Cleanup previous installation
-Write-Host "Removing previous installation..." -ForegroundColor Gray
-Get-Process -Name "dnsproxy" -ErrorAction SilentlyContinue | Stop-Process -Force
-Get-Process -Name "goodbyedpi" -ErrorAction SilentlyContinue | Stop-Process -Force
-Get-WmiObject Win32_Process | Where-Object {$_.Name -eq "wscript.exe" -and $_.CommandLine -like "*dns-bibica-net-startup.vbs*"} | ForEach-Object {$_.Terminate()}
+function Download-GitHubRelease {
+    param(
+        [string]$Repo,
+        [string]$AssetPattern,
+        [string]$DestPath,
+        [string]$DisplayName,
+        [switch]$IncludePreRelease
+    )
+    
+    Write-Host "Downloading $DisplayName..." -ForegroundColor Gray
+    try {
+        if ($IncludePreRelease) {
+            $releases = Invoke-RestMethod "https://api.github.com/repos/$Repo/releases" -ErrorAction Stop
+            $release = $releases | Select-Object -First 1
+            Write-Host "  Version: $($release.tag_name) $(if($release.prerelease){'(Pre-release)'})" -ForegroundColor DarkGray
+        } else {
+            $release = Invoke-RestMethod "https://api.github.com/repos/$Repo/releases/latest" -ErrorAction Stop
+            Write-Host "  Version: $($release.tag_name)" -ForegroundColor DarkGray
+        }
+        
+        $asset = $release.assets | Where-Object { $_.name -like $AssetPattern } | Select-Object -First 1
+        if (-not $asset) { throw "Asset not found: $AssetPattern" }
+        
+        $zipPath = "$tempPath\$DisplayName.zip"
+        (New-Object System.Net.WebClient).DownloadFile($asset.browser_download_url, $zipPath)
+        
+        Add-Type -AssemblyName System.IO.Compression.FileSystem
+        [System.IO.Compression.ZipFile]::ExtractToDirectory($zipPath, "$tempPath\$DisplayName")
+        
+        return "$tempPath\$DisplayName"
+    } catch {
+        throw "Failed to download $DisplayName`: $_"
+    }
+}
 
-Stop-Service -Name "DNSProxy" -Force -ErrorAction SilentlyContinue
-sc.exe delete "DNSProxy" 2>$null | Out-Null
+# ==================== Check Existing Installation ====================
 
-Unload-WinDivertDriver -InstallPath $installPath
+$isReinstall = Test-Path $installPath
 
-$startupPath = "$env:APPDATA\Microsoft\Windows\Start Menu\Programs\Startup"
-$startupShortcut = "$startupPath\dns-bibica-net.lnk"
-if (Test-Path $startupShortcut) { Remove-Item $startupShortcut -Force }
+if ($isReinstall) {
+    Write-Host "Found existing installation, restoring DNS..." -ForegroundColor Gray
+    
+    # Thử restore từ backup file
+    $dnsRestored = $false
+    if (Test-Path $backupFile) {
+        try {
+            $existingBackup = Import-Csv -Path $backupFile -Encoding UTF8
+            foreach ($item in $existingBackup) {
+                try {
+                    $dnsServers = $item.DNS -split ','
+                    if ($dnsServers[0] -eq 'DHCP' -or $dnsServers[0] -eq '') {
+                        Set-DnsClientServerAddress -InterfaceIndex $item.InterfaceIndex -ResetServerAddresses -ErrorAction Stop
+                    } else {
+                        Set-DnsClientServerAddress -InterfaceIndex $item.InterfaceIndex -ServerAddresses $dnsServers -ErrorAction Stop
+                    }
+                } catch {}
+            }
+            $dnsRestored = $true
+            Write-Host "  DNS restored from backup" -ForegroundColor Green
+        } catch {
+            Write-Host "  WARNING: Could not restore DNS from backup file" -ForegroundColor Yellow
+        }
+    } else {
+        Write-Host "  WARNING: Backup file not found" -ForegroundColor Yellow
+    }
+    
+    # Nếu không restore được, set DNS fallback
+    if (-not $dnsRestored) {
+        Set-FallbackDNS
+    }
+}
 
-Start-Sleep -Seconds 2
+# ==================== Complete Cleanup ====================
+
+$needCleanup = (Test-Path $installPath) -or (Test-Path $startupShortcut) -or (Get-Process -Name @("dnsproxy", "goodbyedpi") -ErrorAction SilentlyContinue)
+
+if ($needCleanup) {
+    Write-Host "Cleaning up previous installation..." -ForegroundColor Gray
+}
+
+Stop-AllServices
+if (Test-Path $startupShortcut) { Remove-Item $startupShortcut -Force -ErrorAction SilentlyContinue }
+
+Wait-ProcessStopped -ProcessNames @("dnsproxy", "goodbyedpi") | Out-Null
+Unload-WinDivertDriver
+Start-Sleep -Milliseconds 500
 
 if (Test-Path $installPath) {
-    $retryCount = 0
-    while ((Test-Path $installPath) -and $retryCount -lt 5) {
-        try {
-            Remove-Item $installPath -Recurse -Force -ErrorAction Stop
-        } catch {
-            $retryCount++
-            if ($retryCount -ge 5) {
-                Write-Host "  Some files are in use, will overwrite" -ForegroundColor Gray
-            }
-            Start-Sleep -Seconds 1
-        }
+    Remove-Item $installPath -Recurse -Force -ErrorAction SilentlyContinue
+    Start-Sleep -Milliseconds 300
+    
+    if (Test-Path $installPath) {
+        Start-Sleep -Seconds 1
+        Remove-Item $installPath -Recurse -Force -ErrorAction SilentlyContinue
+    }
+    
+    if (Test-Path $installPath) {
+        Write-Host ""
+        Write-Host "ERROR: Cannot remove existing installation" -ForegroundColor Red
+        Write-Host "WinDivert driver may be locked. Please restart your computer and run installer again." -ForegroundColor Yellow
+        Write-Host ""
+        Read-Host "Press Enter to exit"
+        exit
     }
 }
-if (Test-Path $tempPath) { Remove-Item $tempPath -Recurse -Force -ErrorAction SilentlyContinue }
 
+# ==================== Backup Current DNS ====================
+
+Write-Host "Backing up current DNS settings..." -ForegroundColor Gray
+$dnsBackup = @()
+$adapters = Get-AllAdapters
+foreach ($adapter in $adapters) {
+    $dnsServers = (Get-DnsClientServerAddress -InterfaceIndex $adapter.ifIndex -AddressFamily IPv4 -ErrorAction SilentlyContinue).ServerAddresses
+    $dnsString = if ($null -eq $dnsServers -or $dnsServers.Count -eq 0) { "DHCP" } else { ($dnsServers -join ",") }
+    $dnsBackup += [PSCustomObject]@{
+        Name = $adapter.Name
+        InterfaceIndex = $adapter.ifIndex
+        DNS = $dnsString
+    }
+}
+
+# ==================== Prepare Directories ====================
+
+if (Test-Path $tempPath) { Remove-Item $tempPath -Recurse -Force -ErrorAction SilentlyContinue }
 New-Item -ItemType Directory -Path $installPath -Force | Out-Null
 New-Item -ItemType Directory -Path $dnsproxyPath -Force | Out-Null
 New-Item -ItemType Directory -Path $goodbyedpiPath -Force | Out-Null
 New-Item -ItemType Directory -Path $tempPath -Force | Out-Null
-if (Test-Path $tempBackupFile) {
-    Move-Item $tempBackupFile $backupFile -Force
-}
 
-# ==================== Download AdGuard DNSProxy ====================
-Write-Host "Downloading AdGuard DNSProxy..." -ForegroundColor Gray
+# Save DNS backup
+$dnsBackup | Export-Csv -Path $backupFile -NoTypeInformation -Encoding UTF8
+
+# ==================== Download Components ====================
+
 try {
-    $release = Invoke-RestMethod "https://api.github.com/repos/AdguardTeam/dnsproxy/releases/latest" -ErrorAction Stop
-    $asset = $release.assets | Where-Object { $_.name -like "dnsproxy-windows-amd64-*.zip" } | Select-Object -First 1
-    if (-not $asset) { throw "Cannot find Windows 64-bit release" }
+    # Download DNSProxy
+    $dnsproxyTemp = Download-GitHubRelease `
+        -Repo "AdguardTeam/dnsproxy" `
+        -AssetPattern "dnsproxy-windows-amd64-*.zip" `
+        -DestPath $tempPath `
+        -DisplayName "DNSProxy"
     
-    $zipPath = "$tempPath\dnsproxy.zip"
-    (New-Object System.Net.WebClient).DownloadFile($asset.browser_download_url, $zipPath)
-    
-    Add-Type -AssemblyName System.IO.Compression.FileSystem
-    [System.IO.Compression.ZipFile]::ExtractToDirectory($zipPath, $tempPath)
-    
-    $exePath = Get-ChildItem -Path $tempPath -Filter "dnsproxy.exe" -Recurse | Select-Object -First 1
-    if (-not $exePath) { 
-        $exePath = Get-ChildItem -Path $tempPath -Filter "windows-amd64\dnsproxy.exe" -Recurse | Select-Object -First 1
-    }
-    if (-not $exePath) { throw "Cannot find dnsproxy.exe" }
+    $exePath = Get-ChildItem -Path $dnsproxyTemp -Filter "dnsproxy.exe" -Recurse | Select-Object -First 1
+    if (-not $exePath) { throw "dnsproxy.exe not found" }
     Copy-Item $exePath.FullName "$dnsproxyPath\dnsproxy.exe" -Force
-} catch {
-    Write-Host "ERROR: Failed to download AdGuard DNSProxy" -ForegroundColor Red
-    Write-Host $_.Exception.Message -ForegroundColor Red
-    Read-Host "Press Enter to exit"
-    exit
-}
-
-# ==================== Download GoodbyeDPI ====================
-Write-Host "Downloading GoodbyeDPI..." -ForegroundColor Gray
-try {
-    $goodbyeReleases = Invoke-RestMethod "https://api.github.com/repos/ValdikSS/GoodbyeDPI/releases" -ErrorAction Stop
-    $goodbyeRelease = $goodbyeReleases | Select-Object -First 1
-    if (-not $goodbyeRelease) { throw "Cannot find GoodbyeDPI releases" }
     
-    $goodbyeAsset = $goodbyeRelease.assets | Where-Object { $_.name -like "*.zip" } | Select-Object -First 1
-    if (-not $goodbyeAsset) { throw "Cannot find GoodbyeDPI package" }
+    # Download GoodbyeDPI
+    $goodbyedpiTemp = Download-GitHubRelease `
+        -Repo "ValdikSS/GoodbyeDPI" `
+        -AssetPattern "*.zip" `
+        -DestPath $tempPath `
+        -DisplayName "GoodbyeDPI" `
+        -IncludePreRelease
     
-    $goodbyeZipPath = "$tempPath\goodbyedpi.zip"
-    (New-Object System.Net.WebClient).DownloadFile($goodbyeAsset.browser_download_url, $goodbyeZipPath)
-    
-    $goodbyeTempPath = "$tempPath\goodbyedpi"
-    New-Item -ItemType Directory -Path $goodbyeTempPath -Force | Out-Null
-    [System.IO.Compression.ZipFile]::ExtractToDirectory($goodbyeZipPath, $goodbyeTempPath)
-    
-    $goodbyeExe = Get-ChildItem -Path $goodbyeTempPath -Filter "goodbyedpi.exe" -Recurse | Where-Object { $_.Directory.Name -eq "x86_64" } | Select-Object -First 1
-    $winDivertDll = Get-ChildItem -Path $goodbyeTempPath -Filter "WinDivert.dll" -Recurse | Where-Object { $_.Directory.Name -eq "x86_64" } | Select-Object -First 1
-    $winDivertSys = Get-ChildItem -Path $goodbyeTempPath -Filter "WinDivert64.sys" -Recurse | Where-Object { $_.Directory.Name -eq "x86_64" } | Select-Object -First 1
+    $goodbyeExe = Get-ChildItem -Path $goodbyedpiTemp -Filter "goodbyedpi.exe" -Recurse | Where-Object { $_.Directory.Name -eq "x86_64" } | Select-Object -First 1
+    $winDivertDll = Get-ChildItem -Path $goodbyedpiTemp -Filter "WinDivert.dll" -Recurse | Where-Object { $_.Directory.Name -eq "x86_64" } | Select-Object -First 1
+    $winDivertSys = Get-ChildItem -Path $goodbyedpiTemp -Filter "WinDivert64.sys" -Recurse | Where-Object { $_.Directory.Name -eq "x86_64" } | Select-Object -First 1
     
     if (-not $goodbyeExe -or -not $winDivertDll -or -not $winDivertSys) {
-        throw "Cannot find required GoodbyeDPI files"
+        throw "GoodbyeDPI files not found"
     }
     
     Copy-Item $goodbyeExe.FullName "$goodbyedpiPath\goodbyedpi.exe" -Force
     Copy-Item $winDivertDll.FullName "$goodbyedpiPath\WinDivert.dll" -Force
     Copy-Item $winDivertSys.FullName "$goodbyedpiPath\WinDivert64.sys" -Force
+    
 } catch {
-    Write-Host "ERROR: Failed to download GoodbyeDPI" -ForegroundColor Red
-    Write-Host $_.Exception.Message -ForegroundColor Red
+    Write-Host ""
+    Write-Host "ERROR: $($_.Exception.Message)" -ForegroundColor Red
+    Write-Host ""
     Read-Host "Press Enter to exit"
     exit
 }
 
 # ==================== Create Config Files ====================
 
-# AdGuard DNSProxy config
 @"
 listen-addrs:
   - 127.0.0.1
@@ -228,12 +285,11 @@ cache-optimistic: true
 
 New-Item -ItemType File -Path "$dnsproxyPath\dnsproxy.log" -Force | Out-Null
 
-# Create VBS startup launcher
+# VBS startup launcher
 @"
 Set ws = CreateObject("WScript.Shell")
 Set objWMIService = GetObject("winmgmts:\\.\root\cimv2")
 
-' Terminate existing processes
 On Error Resume Next
 Set colProcesses = objWMIService.ExecQuery("SELECT * FROM Win32_Process WHERE Name = 'dnsproxy.exe' OR Name = 'goodbyedpi.exe'")
 For Each objProcess in colProcesses
@@ -243,35 +299,32 @@ On Error GoTo 0
 
 WScript.Sleep 1000
 
-' Start GoodbyeDPI first
 ws.CurrentDirectory = "$goodbyedpiPath"
 ws.Run "goodbyedpi.exe -9", 0, False
 
 WScript.Sleep 2000
 
-' Start AdGuard DNSProxy
 ws.CurrentDirectory = "$dnsproxyPath"
 ws.Run "dnsproxy.exe --config-path=config.yaml --output=dnsproxy.log", 0, False
 "@ | Out-File "$installPath\dns-bibica-net-startup.vbs" -Encoding ASCII
 
-# Create uninstall.bat
+# Uninstall script
 @"
 @echo off
-setlocal enabledelayedexpansion
-cls
-echo dns-bibica-net uninstaller
-echo.
 net session >nul 2>&1
 if %errorLevel% neq 0 (
-    echo Administrator privileges required. Restarting...
     powershell -Command "Start-Process '%~f0' -Verb RunAs"
     exit /b
 )
+cls
+echo dns-bibica-net uninstaller
+echo.
 
 echo Stopping services...
 taskkill /F /IM dnsproxy.exe >nul 2>&1
 taskkill /F /IM goodbyedpi.exe >nul 2>&1
 for /f "tokens=2" %%a in ('wmic process where "name='wscript.exe' and commandline like '%%dns-bibica-net-startup.vbs%%'" get processid 2^>nul ^| findstr /r "[0-9]"') do taskkill /F /PID %%a >nul 2>&1
+timeout /t 2 /nobreak >nul
 
 echo Unloading WinDivert driver...
 for /f "tokens=2" %%s in ('sc query type^= driver ^| findstr /i "WinDivert"') do (
@@ -280,56 +333,28 @@ for /f "tokens=2" %%s in ('sc query type^= driver ^| findstr /i "WinDivert"') do
 )
 sc stop WinDivert >nul 2>&1
 sc delete WinDivert >nul 2>&1
+timeout /t 1 /nobreak >nul
 
-timeout /t 2 /nobreak >nul
+echo Removing startup...
+del "$startupShortcut" >nul 2>&1
 
-echo Removing startup shortcut...
-del "$startupPath\dns-bibica-net.lnk" >nul 2>&1
-
-echo Restoring DNS settings...
-powershell -NoProfile -ExecutionPolicy Bypass -Command ^
-"`$backup = Import-Csv '$backupFile' -Encoding UTF8; ^
-foreach (`$item in `$backup) { ^
-    try { ^
-        `$dnsServers = `$item.DNS -split ','; ^
-        if (`$dnsServers[0] -eq 'DHCP' -or `$dnsServers[0] -eq '') { ^
-            Set-DnsClientServerAddress -InterfaceIndex `$item.InterfaceIndex -ResetServerAddresses -ErrorAction Stop; ^
-            Write-Host '  ' `$item.Name ': DHCP'; ^
-        } else { ^
-            Set-DnsClientServerAddress -InterfaceIndex `$item.InterfaceIndex -ServerAddresses `$dnsServers -ErrorAction Stop; ^
-            Write-Host '  ' `$item.Name ': ' (`$dnsServers -join ', '); ^
-        } ^
-    } catch {} ^
-}"
-
-echo.
-echo Removing installation...
-cd /d "%TEMP%"
-
-REM Xóa WinDivert64.sys
-set sysfile=$goodbyedpiPath\WinDivert64.sys
-set retries=0
-:retry_delete
-if exist "%sysfile%" (
-    del /f /q "%sysfile%" >nul 2>&1
-    if exist "%sysfile%" (
-        set /a retries+=1
-        if !retries! lss 5 (
-            timeout /t 1 /nobreak >nul
-            goto retry_delete
-        ) else (
-            echo WinDivert64.sys locked, will be deleted on reboot
-        )
-    )
+echo Restoring DNS...
+if exist "$backupFile" (
+    powershell -NoProfile -ExecutionPolicy Bypass -Command "try { Import-Csv '$backupFile' -Encoding UTF8 | ForEach-Object { try { `$dns = `$_.DNS -split ','; if (`$dns[0] -eq 'DHCP' -or `$dns[0] -eq '') { Set-DnsClientServerAddress -InterfaceIndex `$_.InterfaceIndex -ResetServerAddresses -ErrorAction Stop; Write-Host '  ' `$_.Name ': DHCP' } else { Set-DnsClientServerAddress -InterfaceIndex `$_.InterfaceIndex -ServerAddresses `$dns -ErrorAction Stop; Write-Host '  ' `$_.Name ': ' (`$dns -join ', ') } } catch {} } } catch { Write-Host '  Backup file error, setting fallback DNS...' -ForegroundColor Yellow; Get-NetAdapter | Where-Object { `$_.InterfaceDescription -notlike '*Loopback*' } | ForEach-Object { try { Set-DnsClientServerAddress -InterfaceIndex `$_.ifIndex -ServerAddresses @('8.8.8.8', '1.1.1.1') -ErrorAction Stop; Write-Host '  ' `$_.Name ': 8.8.8.8, 1.1.1.1' } catch {} } }"
+) else (
+    echo   No backup file found, setting fallback DNS...
+    powershell -NoProfile -ExecutionPolicy Bypass -Command "Get-NetAdapter | Where-Object { `$_.InterfaceDescription -notlike '*Loopback*' } | ForEach-Object { try { Set-DnsClientServerAddress -InterfaceIndex `$_.ifIndex -ServerAddresses @('8.8.8.8', '1.1.1.1') -ErrorAction Stop; Write-Host '  ' `$_.Name ': 8.8.8.8, 1.1.1.1' } catch {} }"
 )
 
-timeout /t 1 /nobreak >nul
+echo.
+echo Removing files...
+cd /d "%TEMP%"
 rmdir /s /q "$installPath" >nul 2>&1
 
 if exist "$installPath" (
-    echo Some files locked, will be deleted on reboot
+    echo   Some files locked, will be deleted on reboot
 ) else (
-    echo Installation removed
+    echo   Installation removed
 )
 
 echo.
@@ -346,50 +371,109 @@ $shortcut.Arguments = "`"$installPath\dns-bibica-net-startup.vbs`""
 $shortcut.WorkingDirectory = $installPath
 $shortcut.Save()
 
-# Start services
+Remove-Item $tempPath -Recurse -Force -ErrorAction SilentlyContinue
+
+# ==================== Start Services ====================
+
 Write-Host "Starting services..." -ForegroundColor Gray
 Start-Process "wscript.exe" -ArgumentList "`"$installPath\dns-bibica-net-startup.vbs`"" -WindowStyle Hidden
-Start-Sleep -Seconds 3
 
-# Configure DNS
+# ==================== Verify Services ====================
+
+Write-Host "Verifying services..." -ForegroundColor Gray
+if (-not (Wait-ProcessStarted -ProcessNames @("dnsproxy", "goodbyedpi") -TimeoutSeconds 5)) {
+    Write-Host ""
+    Write-Host "ERROR: Services failed to start" -ForegroundColor Red
+    Write-Host "Restoring DNS settings..." -ForegroundColor Yellow
+
+    if (Test-Path $backupFile) {
+        try {
+            $backup = Import-Csv -Path $backupFile -Encoding UTF8
+            foreach ($item in $backup) {
+                try {
+                    $dnsServers = $item.DNS -split ','
+                    if ($dnsServers[0] -eq 'DHCP' -or $dnsServers[0] -eq '') {
+                        Set-DnsClientServerAddress -InterfaceIndex $item.InterfaceIndex -ResetServerAddresses -ErrorAction Stop
+                    } else {
+                        Set-DnsClientServerAddress -InterfaceIndex $item.InterfaceIndex -ServerAddresses $dnsServers -ErrorAction Stop
+                    }
+                } catch {}
+            }
+            Write-Host "DNS restored successfully" -ForegroundColor Green
+        } catch {
+            Set-FallbackDNS
+        }
+    } else {
+        Set-FallbackDNS
+    }
+    
+    Write-Host ""
+    Write-Host "Please check logs at: $dnsproxyPath\dnsproxy.log" -ForegroundColor Yellow
+    Write-Host ""
+    Read-Host "Press Enter to exit"
+    exit
+}
+
+# ==================== Test DNS ====================
+
+#Write-Host "Testing DNS service..." -ForegroundColor Gray
+if (-not (Test-LocalDNS -TimeoutSeconds 5)) {
+    Write-Host ""
+    Write-Host "ERROR: DNS service not responding" -ForegroundColor Red
+    Write-Host "Restoring DNS settings..." -ForegroundColor Yellow
+    
+    Stop-AllServices
+
+    if (Test-Path $backupFile) {
+        try {
+            $backup = Import-Csv -Path $backupFile -Encoding UTF8
+            foreach ($item in $backup) {
+                try {
+                    $dnsServers = $item.DNS -split ','
+                    if ($dnsServers[0] -eq 'DHCP' -or $dnsServers[0] -eq '') {
+                        Set-DnsClientServerAddress -InterfaceIndex $item.InterfaceIndex -ResetServerAddresses -ErrorAction Stop
+                    } else {
+                        Set-DnsClientServerAddress -InterfaceIndex $item.InterfaceIndex -ServerAddresses $dnsServers -ErrorAction Stop
+                    }
+                } catch {}
+            }
+            Write-Host "DNS restored successfully" -ForegroundColor Green
+        } catch {
+            Set-FallbackDNS
+        }
+    } else {
+        Set-FallbackDNS
+    }
+    
+    Write-Host ""
+    Write-Host "Services are running but DNS queries fail" -ForegroundColor Yellow
+    Write-Host ""
+    Read-Host "Press Enter to exit"
+    exit
+}
+
+# ==================== Configure System DNS ====================
+
 Write-Host "Configuring system DNS..." -ForegroundColor Gray
 $adapters = Get-AllAdapters
-$configuredCount = 0
 foreach ($adapter in $adapters) {
     try {
         Set-DnsClientServerAddress -InterfaceIndex $adapter.ifIndex -ServerAddresses "127.0.0.1" -ErrorAction Stop
-        $configuredCount++
     } catch {}
 }
 
-Remove-Item $tempPath -Recurse -Force -ErrorAction SilentlyContinue
+# ==================== Success ====================
 
-# Verify services
-Start-Sleep -Seconds 2
-$dnsproxyRunning = Get-Process -Name "dnsproxy" -ErrorAction SilentlyContinue
-$goodbyedpiRunning = Get-Process -Name "goodbyedpi" -ErrorAction SilentlyContinue
-
-# Display result
 Write-Host ""
 Write-Host "========================================" -ForegroundColor Cyan
 Write-Host "Installation complete!" -ForegroundColor Green
 Write-Host "========================================" -ForegroundColor Cyan
 Write-Host ""
-
-if ($dnsproxyRunning -and $goodbyedpiRunning) {
-    Write-Host "System DNS changed to:" -ForegroundColor White
-    Write-Host "  127.0.0.1 (dns.bibica.net DoH + DPI bypass)" -ForegroundColor White
-    Write-Host ""
-    Write-Host "Services are running and will auto-start on boot" -ForegroundColor Green
-} else {
-    Write-Host "WARNING: Services failed to start" -ForegroundColor Red
-    Write-Host "Please restart your computer" -ForegroundColor Yellow
-}
-
+Write-Host "System DNS: 127.0.0.1 (dns.bibica.net DoH + DPI bypass)" -ForegroundColor White
+Write-Host "Services: Running and auto-start enabled" -ForegroundColor Green
 Write-Host ""
 Write-Host "Install location: $installPath" -ForegroundColor Gray
 Write-Host "To uninstall: $installPath\uninstall.bat" -ForegroundColor Gray
-Write-Host "  (Your original DNS settings will be restored)" -ForegroundColor Gray
 Write-Host ""
 Write-Host "Press any key to exit..."
 $null = $Host.UI.RawUI.ReadKey("NoEcho,IncludeKeyDown")
