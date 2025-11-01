@@ -285,6 +285,15 @@ cache-optimistic: true
 
 New-Item -ItemType File -Path "$dnsproxyPath\dnsproxy.log" -Force | Out-Null
 
+# Create GoodbyeDPI blacklist
+@"
+pornhub.com
+www.pornhub.com
+rsload.net
+vn.linkedin.com
+medium.com
+"@ | Out-File "$goodbyedpiPath\blacklist.txt" -Encoding UTF8
+
 # VBS startup launcher
 @"
 Set ws = CreateObject("WScript.Shell")
@@ -300,7 +309,7 @@ On Error GoTo 0
 WScript.Sleep 1000
 
 ws.CurrentDirectory = "$goodbyedpiPath"
-ws.Run "goodbyedpi.exe -9", 0, False
+ws.Run "goodbyedpi.exe -9 --blacklist blacklist.txt", 0, False
 
 WScript.Sleep 2000
 
