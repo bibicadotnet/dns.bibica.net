@@ -292,6 +292,7 @@ www.pornhub.com
 rsload.net
 vn.linkedin.com
 medium.com
+steamcommunity.com
 "@ | Out-File "$goodbyedpiPath\blacklist.txt" -Encoding UTF8
 
 # VBS startup launcher
