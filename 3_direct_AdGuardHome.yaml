@@ -23,12 +23,9 @@ dns:
   ratelimit_whitelist: []
   refuse_any: true
   upstream_dns:
-    - https://208.67.222.222/dns-query
     - https://208.67.220.220/dns-query
     - https://8.8.8.8/dns-query
-    - https://8.8.4.4/dns-query
     - https://9.9.9.11/dns-query
-    - https://149.112.112.11/dns-query
     - '[/nikke-en.com/]https://dns.mullvad.net/dns-query'
     - '[/github.io/]https://dns.mullvad.net/dns-query'
     - '[/github.com/]https://dns.mullvad.net/dns-query'
@@ -41,6 +38,7 @@ dns:
     - '[/tiktokcdn-eu.com/]https://208.67.222.222/dns-query'
     - '[/tiktok.com/]https://208.67.222.222/dns-query'
     - '[/tiktokv.com/]https://208.67.222.222/dns-query'
+    - '[/ttwstatic.com/]https://208.67.222.222/dns-query'
     - '[/bilibili.com/]https://208.67.220.220/dns-query'
     - '[/bilivideo.com/]https://208.67.220.220/dns-query'
     - '[/fastly.net/]https://208.67.222.222/dns-query'
@@ -637,7 +635,7 @@ dns:
     - '[/ztat.net/]https://8.8.8.8/dns-query'
     - '[/zmctrack.net/]https://8.8.8.8/dns-query'
     - '[/zog.link/]https://8.8.8.8/dns-query'
-    - '[/zukxd6fkxqn.com/]https://8.8.8.8/dns-query'
+    - '[/zukxd6fkxqn.com/]https://8.8.8.8/dns-query'  
   upstream_dns_file: ""
   bootstrap_dns:
     - 9.9.9.9
