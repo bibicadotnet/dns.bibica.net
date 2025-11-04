@@ -14,8 +14,8 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
 # AdGuard Home credentials
 AGH_URL="https://admin.dns.bibica.net"
-AGH_USER="xxxxxxxx"
-AGH_PASS="xxxxxxxxxxxxxxxxxx"
+AGH_USER="xxxxxxxxx"
+AGH_PASS="xxxxxxxxxxxxxxxxxxxxx"
 AUTH="$AGH_USER:$AGH_PASS"
 
 # ECS IP for Vietnam (used for DNS queries)
@@ -580,8 +580,8 @@ echo ""
 if [ $NEW_TOTAL -eq 0 ]; then
     echo "No new domains to process."
     rm -f "$TEMP_DOMAINS" "$TEMP_NEW_DOMAINS" "$TEMP_EXISTING_DOMAINS" "$TEMP_BLOCKED"
-    exit 0
-fi
+    # Don't exit here - continue to clear query logs at the end
+else
 
     # Export functions for parallel DNS checks
     export -f check_new_domain
@@ -643,17 +643,21 @@ while IFS='|' read -r status domain error; do
     echo "  ERROR: $domain - $error"
 done < <(grep "^ERROR|" "$TEMP_ADD_RESULTS" || true)
 
-rm -f "$TEMP_NEW_CHECK_RESULTS" "$TEMP_ADD_ACTIONS" "$TEMP_ADD_RESULTS"
+    rm -f "$TEMP_NEW_CHECK_RESULTS" "$TEMP_ADD_ACTIONS" "$TEMP_ADD_RESULTS"
 
-# Cleanup
+    # Cleanup
+    rm -f "$TEMP_DOMAINS" "$TEMP_NEW_DOMAINS" "$TEMP_EXISTING_DOMAINS" "$TEMP_BLOCKED"
+
+    echo ""
+    echo "Phase 2 Summary:"
+    echo "  New domains added:    $COUNT_ADDED domains"
+    echo "  Not using Akamai:     $COUNT_NO_AKAMAI domains"
+    echo "  Errors:               $COUNT_ERROR domains"
+    echo ""
+fi
+
+# Cleanup temp files if they still exist
 rm -f "$TEMP_DOMAINS" "$TEMP_NEW_DOMAINS" "$TEMP_EXISTING_DOMAINS" "$TEMP_BLOCKED"
-
-echo ""
-echo "Phase 2 Summary:"
-echo "  New domains added:    $COUNT_ADDED domains"
-echo "  Not using Akamai:     $COUNT_NO_AKAMAI domains"
-echo "  Errors:               $COUNT_ERROR domains"
-echo ""
 
 # Final statistics
 echo "============================================================================"
