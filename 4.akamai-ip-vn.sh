@@ -14,8 +14,8 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
 # AdGuard Home credentials
 AGH_URL="https://admin.dns.bibica.net"
-AGH_USER="xxxxxxxxxx"
-AGH_PASS="xxxxxxxxxxxxxxxxxxxxxxx"
+AGH_USER="xxxxxx"
+AGH_PASS="xxxxxxxxxxxxxxx"
 AUTH="$AGH_USER:$AGH_PASS"
 
 # ECS IP for Vietnam (used for DNS queries)
@@ -42,7 +42,7 @@ QUERY_LOG_LIMIT=1000000
 VN_IP_CACHE="${SCRIPT_DIR}/vn_ip_ranges.txt"
 NON_AKAMAI_CACHE="${SCRIPT_DIR}/non_akamai_domains.txt"
 
-# Comprehensive Akamai patterns
+# Comprehensive Akamai patterns (for matching CNAME records)
 AKAMAI_PATTERNS="edgesuite\.net|edgekey\.net|akamaiedge\.net|akamaized\.net"
 AKAMAI_PATTERNS="${AKAMAI_PATTERNS}|akamai\.net|akamaitechnologies\.(com|net)"
 AKAMAI_PATTERNS="${AKAMAI_PATTERNS}|akamaihd\.net|akamaistream\.net|akamaitech\.net"
@@ -61,6 +61,9 @@ AKAMAI_PATTERNS="${AKAMAI_PATTERNS}|com\.edgekey-staging\.net|test\.edgekey-stag
 AKAMAI_PATTERNS="${AKAMAI_PATTERNS}|com\.edgesuite\.net|net\.edgesuite\.net|mdc\.edgesuite\.net"
 AKAMAI_PATTERNS="${AKAMAI_PATTERNS}|com\.edgesuite-staging\.net|net\.edgesuite-staging\.net"
 AKAMAI_PATTERNS="${AKAMAI_PATTERNS}|mdc\.edgesuite-staging\.net"
+
+# Common Akamai domain suffixes to try when checking existing rewrites
+AKAMAI_SUFFIXES="akamaized.net edgesuite.net edgekey.net akamaiedge.net akamaihd.net akadns.net akasecure.net akamaitechnologies.com akamaitechnologies.net akamaiorigin.net akamaitech.net akamaistream.net akamai.net"
 
 # ============================================================================
 # SETUP: Install grepcidr if not available
@@ -154,31 +157,10 @@ clean_old_cache() {
 }
 
 # ============================================================================
-# FUNCTION: Check if domain uses Akamai CDN and get ALL Vietnam IPs
+# FUNCTION: Query DNS and extract Vietnam IPs from response
 # ============================================================================
-check_akamai_and_get_all_vn_ips() {
-    local domain="$1"
-    
-    # Check cache first
-    if is_cached_non_akamai "$domain"; then
-        return 1
-    fi
-    
-    # Query Google DNS with ECS
-    local response=$(curl -s -m 5 "https://dns.google/resolve?name=${domain}&type=A&edns_client_subnet=${ECS_IP}" 2>/dev/null)
-    
-    if [ -z "$response" ]; then
-        return 1
-    fi
-    
-    # Check if uses Akamai (CNAME records)
-    local has_akamai=$(echo "$response" | jq -r '.Answer[]? | select(.type == 5) | .data' 2>/dev/null | grep -iE "$AKAMAI_PATTERNS")
-    
-    if [ -z "$has_akamai" ]; then
-        # Not Akamai, cache it
-        cache_non_akamai "$domain"
-        return 1
-    fi
+extract_vn_ips_from_response() {
+    local response="$1"
     
     # Extract A record IPs
     local ips=$(echo "$response" | jq -r '.Answer[]? | select(.type == 1) | .data' 2>/dev/null)
@@ -210,6 +192,94 @@ check_akamai_and_get_all_vn_ips() {
 }
 
 # ============================================================================
+# FUNCTION: Check if domain uses Akamai CDN and get ALL Vietnam IPs
+# ============================================================================
+check_akamai_and_get_all_vn_ips() {
+    local domain="$1"
+    local try_akamai_patterns="${2:-false}"  # Optional: try Akamai domain patterns if no VN IP found
+    local try_all_patterns="${3:-false}"     # Optional: try all patterns even if domain has Akamai CNAME
+    
+    # Check cache first (only for new domains, not existing rewrites)
+    if [ "$try_akamai_patterns" != "true" ]; then
+        if is_cached_non_akamai "$domain"; then
+            return 1
+        fi
+    fi
+    
+    # Query Google DNS with ECS
+    local response=$(curl -s -m 5 "https://dns.google/resolve?name=${domain}&type=A&edns_client_subnet=${ECS_IP}" 2>/dev/null)
+    local has_akamai=""
+    local all_vn_ips=""
+    
+    if [ -n "$response" ]; then
+        # Check if uses Akamai (CNAME records)
+        has_akamai=$(echo "$response" | jq -r '.Answer[]? | select(.type == 5) | .data' 2>/dev/null | grep -iE "$AKAMAI_PATTERNS")
+        
+        if [ -n "$has_akamai" ]; then
+            # Try to extract Vietnam IPs from response
+            local vn_ips=$(extract_vn_ips_from_response "$response")
+            
+            if [ -n "$vn_ips" ]; then
+                all_vn_ips="$vn_ips"
+                # If try_all_patterns is false, return immediately
+                if [ "$try_all_patterns" != "true" ]; then
+                    echo "$vn_ips"
+                    return 0
+                fi
+            fi
+        fi
+    fi
+    
+    # Try Akamai domain patterns if:
+    # 1. try_akamai_patterns is true (for existing rewrites when no VN IP found)
+    # 2. try_all_patterns is true (for new domains to check all patterns)
+    if [ "$try_akamai_patterns" = "true" ] || [ "$try_all_patterns" = "true" ]; then
+        for suffix in $AKAMAI_SUFFIXES; do
+            local akamai_domain="${domain}.${suffix}"
+            local akamai_response=$(curl -s -m 5 "https://dns.google/resolve?name=${akamai_domain}&type=A&edns_client_subnet=${ECS_IP}" 2>/dev/null)
+            
+            if [ -z "$akamai_response" ]; then
+                continue
+            fi
+            
+            # Check if this is Akamai domain (CNAME or direct A record)
+            local akamai_check=$(echo "$akamai_response" | jq -r '.Answer[]? | select(.type == 5) | .data' 2>/dev/null | grep -iE "$AKAMAI_PATTERNS")
+            if [ -z "$akamai_check" ]; then
+                # Also check A records (might be direct Akamai IP)
+                akamai_check=$(echo "$akamai_response" | jq -r '.Answer[]? | select(.type == 1) | .data' 2>/dev/null)
+            fi
+            
+            if [ -n "$akamai_check" ]; then
+                # Try to extract Vietnam IPs from Akamai domain response
+                local akamai_vn_ips=$(extract_vn_ips_from_response "$akamai_response")
+                if [ -n "$akamai_vn_ips" ]; then
+                    # Merge with existing IPs (if any)
+                    if [ -z "$all_vn_ips" ]; then
+                        all_vn_ips="$akamai_vn_ips"
+                    else
+                        # Combine and remove duplicates
+                        all_vn_ips=$(echo "$all_vn_ips,$akamai_vn_ips" | tr ',' '\n' | sort -u | tr '\n' ',' | sed 's/,$//')
+                    fi
+                fi
+            fi
+        done
+    else
+        # If not trying patterns and no Akamai found, return failure
+        if [ -z "$has_akamai" ]; then
+            return 1
+        fi
+    fi
+    
+    # Return all collected Vietnam IPs
+    if [ -n "$all_vn_ips" ]; then
+        echo "$all_vn_ips"
+        return 0
+    fi
+    
+    return 1
+}
+
+# ============================================================================
 # FUNCTION: Check existing rewrite (DNS check only - no API calls)
 # ============================================================================
 check_existing_rewrite() {
@@ -224,7 +294,8 @@ check_existing_rewrite() {
     fi
     
     # Get ALL new Vietnam IPs
-    local new_ips=$(check_akamai_and_get_all_vn_ips "$domain")
+    # Try Akamai patterns if domain is in rewrites but no VN IP found (might be using different CDN temporarily)
+    local new_ips=$(check_akamai_and_get_all_vn_ips "$domain" "true")
     
     if [ -z "$new_ips" ]; then
         echo "NO_VN_IP|$domain|$current_ips"
@@ -349,9 +420,13 @@ check_new_domain() {
     local domain="$1"
     
     # Check Akamai and get ALL Vietnam IPs
-    local vn_ips=$(check_akamai_and_get_all_vn_ips "$domain")
+    # Try domain + all Akamai patterns to ensure we catch all possible IPs
+    local vn_ips=$(check_akamai_and_get_all_vn_ips "$domain" "false" "true")
     
     if [ $? -ne 0 ] || [ -z "$vn_ips" ]; then
+        # No Vietnam IPs found after checking domain + all patterns
+        # Cache it as non-Akamai (will be checked again after 7 days)
+        cache_non_akamai "$domain"
         echo "NO_AKAMAI|$domain"
         return
     fi
@@ -436,11 +511,11 @@ else
     # Export functions for parallel DNS checks
     export -f check_existing_rewrite
     export -f check_akamai_and_get_all_vn_ips
+    export -f extract_vn_ips_from_response
     export -f is_vietnam_ip
-    export -f is_cached_non_akamai
-    export -f cache_non_akamai
     export ECS_IP
     export AKAMAI_PATTERNS
+    export AKAMAI_SUFFIXES
     export VN_IP_CACHE
     export NON_AKAMAI_CACHE
     
@@ -576,16 +651,18 @@ if [ $NEW_TOTAL -eq 0 ]; then
     exit 0
 fi
 
-# Export functions for parallel DNS checks
-export -f check_new_domain
-export -f check_akamai_and_get_all_vn_ips
-export -f is_vietnam_ip
-export -f is_cached_non_akamai
-export -f cache_non_akamai
-export ECS_IP
-export AKAMAI_PATTERNS
-export VN_IP_CACHE
-export NON_AKAMAI_CACHE
+    # Export functions for parallel DNS checks
+    export -f check_new_domain
+    export -f check_akamai_and_get_all_vn_ips
+    export -f extract_vn_ips_from_response
+    export -f is_vietnam_ip
+    export -f is_cached_non_akamai
+    export -f cache_non_akamai
+    export ECS_IP
+    export AKAMAI_PATTERNS
+    export AKAMAI_SUFFIXES
+    export VN_IP_CACHE
+    export NON_AKAMAI_CACHE
 
 TEMP_NEW_CHECK_RESULTS="/tmp/agh_new_check_results_$$.txt"
 > "$TEMP_NEW_CHECK_RESULTS"
