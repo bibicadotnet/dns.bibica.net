@@ -14,8 +14,8 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
 # AdGuard Home credentials
 AGH_URL="https://admin.dns.bibica.net"
-AGH_USER="xxxxxxxxx"
-AGH_PASS="xxxxxxxxxxxxxxxxxxxxx"
+AGH_USER="xxxxxxxxxx"
+AGH_PASS="xxxxxxxxxxxxxxxxxx"
 AUTH="$AGH_USER:$AGH_PASS"
 
 # ECS IP for Vietnam (used for DNS queries)
@@ -277,45 +277,45 @@ apply_api_action() {
             ;;
             
         UPDATE)
-            # Convert to arrays
-            IFS=',' read -ra CURRENT_ARRAY <<< "$current_ips"
-            IFS=',' read -ra NEW_ARRAY <<< "$new_ips"
+            # Delete ALL existing entries for this domain first, then add all new IPs
+            # This ensures no duplicates and clean state
             
-            # Find IPs to delete (in current but not in new)
+            # Step 1: Delete all current IPs
+            IFS=',' read -ra CURRENT_ARRAY <<< "$current_ips"
             local deleted=0
             for ip in "${CURRENT_ARRAY[@]}"; do
-                if [[ ! " ${NEW_ARRAY[@]} " =~ " ${ip} " ]]; then
-                    curl -s -u "$AUTH" \
-                      -X POST \
-                      -H 'Content-Type: application/json' \
-                      -d "$(jq -n --arg d "$domain" --arg a "$ip" '{domain: $d, answer: $a}')" \
-                      "$AGH_URL/control/rewrite/delete" > /dev/null 2>&1
-                    deleted=$((deleted + 1))
-                fi
+                curl -s -u "$AUTH" \
+                  -X POST \
+                  -H 'Content-Type: application/json' \
+                  -d "$(jq -n --arg d "$domain" --arg a "$ip" '{domain: $d, answer: $a}')" \
+                  "$AGH_URL/control/rewrite/delete" > /dev/null 2>&1
+                deleted=$((deleted + 1))
             done
             
-            # Find IPs to add (in new but not in current)
+            # Step 2: Add all new IPs (remove duplicates first)
+            IFS=',' read -ra NEW_ARRAY <<< "$new_ips"
+            # Remove duplicates from new IPs
+            local unique_new_ips=($(printf '%s\n' "${NEW_ARRAY[@]}" | sort -u))
+            
             local added=0
             local errors=0
-            for ip in "${NEW_ARRAY[@]}"; do
-                if [[ ! " ${CURRENT_ARRAY[@]} " =~ " ${ip} " ]]; then
-                    local result=$(curl -s -u "$AUTH" \
-                      -X POST \
-                      -H 'Content-Type: application/json' \
-                      -d "$(jq -n --arg d "$domain" --arg a "$ip" '{domain: $d, answer: $a}')" \
-                      "$AGH_URL/control/rewrite/add" 2>&1)
-                    
-                    local error_msg=$(echo "$result" | jq -r '.error // empty' 2>/dev/null)
-                    if [ -z "$error_msg" ]; then
-                        added=$((added + 1))
-                    else
-                        errors=$((errors + 1))
-                    fi
+            for ip in "${unique_new_ips[@]}"; do
+                local result=$(curl -s -u "$AUTH" \
+                  -X POST \
+                  -H 'Content-Type: application/json' \
+                  -d "$(jq -n --arg d "$domain" --arg a "$ip" '{domain: $d, answer: $a}')" \
+                  "$AGH_URL/control/rewrite/add" 2>&1)
+                
+                local error_msg=$(echo "$result" | jq -r '.error // empty' 2>/dev/null)
+                if [ -z "$error_msg" ]; then
+                    added=$((added + 1))
+                else
+                    errors=$((errors + 1))
                 fi
             done
             
             if [ $errors -eq 0 ]; then
-                echo "UPDATED|$domain|Removed: $deleted, Added: $added, Total: ${#NEW_ARRAY[@]} IPs"
+                echo "UPDATED|$domain|Removed: $deleted, Added: $added, Total: ${#unique_new_ips[@]} unique IPs"
             else
                 echo "ERROR|$domain|Updated with errors: +$added -$deleted !$errors"
             fi
