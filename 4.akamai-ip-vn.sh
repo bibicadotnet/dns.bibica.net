@@ -19,7 +19,7 @@ AGH_PASS="xxxxxxxxxxxxxxxxx"
 ECS_IP="14.191.231.0"
 
 # Performance tuning
-DNS_PARALLEL=20
+DNS_PARALLEL=2
 DNS_TIMEOUT=1
 
 # Domains
