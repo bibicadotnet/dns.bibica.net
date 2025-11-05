@@ -777,9 +777,6 @@ filtering:
     - domain: '*.medium.com'
       answer: bibica.net
       enabled: true
-    - domain: admin.dns.bibica.net
-      answer: 3.1.2.82
-      enabled: true
     - domain: pornhub.com
       answer: www.pornhub.com
       enabled: true
