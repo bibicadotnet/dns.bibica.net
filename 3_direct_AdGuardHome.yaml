@@ -16,7 +16,7 @@ dns:
   bind_hosts:
     - 0.0.0.0
   port: 53
-  anonymize_client_ip: false
+  anonymize_client_ip: true
   ratelimit: 0
   ratelimit_subnet_len_ipv4: 32
   ratelimit_subnet_len_ipv6: 128
@@ -25,7 +25,6 @@ dns:
   upstream_dns:
     - https://208.67.220.220/dns-query
     - https://8.8.8.8/dns-query
-    - https://9.9.9.11/dns-query
     - '[/nikke-en.com/]https://dns.mullvad.net/dns-query'
     - '[/github.io/]https://dns.mullvad.net/dns-query'
     - '[/github.com/]https://dns.mullvad.net/dns-query'
@@ -39,7 +38,11 @@ dns:
     - '[/tiktok.com/]https://8.8.8.8/dns-query'
     - '[/tiktokv.com/]https://8.8.8.8/dns-query'
     - '[/ttwstatic.com/]https://8.8.8.8/dns-query'
+    - '[/douyin.com/]https://8.8.8.8/dns-query'
+    - '[/douyinpic.com/]https://8.8.8.8/dns-query'
+    - '[/douyinvod.com/]https://8.8.8.8/dns-query'
     - '[/bilibili.com/]https://8.8.8.8/dns-query'
+    - '[/biliimg.com/]https://8.8.8.8/dns-query'
     - '[/bilivideo.com/]https://8.8.8.8/dns-query'
     - '[/biligame.com/]https://8.8.8.8/dns-query'
     - '[/fastly.net/]https://8.8.8.8/dns-query'
@@ -193,6 +196,10 @@ dns:
     - '[/trvl-px.com/]https://8.8.8.8/dns-query'
     - '[/eccmp.com/]https://8.8.8.8/dns-query'
     - '[/fbcdn.net/]https://8.8.8.8/dns-query'
+    - '[/instagram.com/]https://8.8.8.8/dns-query'
+    - '[/cdninstagram.com/]https://8.8.8.8/dns-query'
+    - '[/threads.com/]https://8.8.8.8/dns-query'
+    - '[/facebook.com/]https://8.8.8.8/dns-query'
     - '[/fbsbx.com/]https://8.8.8.8/dns-query'
     - '[/fastpic.ru/]https://8.8.8.8/dns-query'
     - '[/fileserve.xyz/]https://8.8.8.8/dns-query'
@@ -666,7 +673,7 @@ dns:
   aaaa_disabled: true
   enable_dnssec: false
   edns_client_subnet:
-    custom_ip: ""
+    custom_ip: 125.214.1.1
     enabled: true
     use_custom: false
   max_goroutines: 300
@@ -706,13 +713,13 @@ querylog:
   ignored: []
   interval: 24h
   size_memory: 1000
-  enabled: false
+  enabled: true
   file_enabled: false
 statistics:
   dir_path: ""
   ignored: []
   interval: 24h
-  enabled: false
+  enabled: true
 filters:
   - enabled: true
     url: https://adguardteam.github.io/HostlistsRegistry/assets/filter_16.txt
@@ -771,14 +778,53 @@ filtering:
   parental_block_host: family-block.dns.adguard.com
   safebrowsing_block_host: standard-block.dns.adguard.com
   rewrites:
-    - domain: medium.com
-      answer: bibica.net
+    - domain: imgur.com
+      answer: imgur.map.fastly.net
       enabled: true
     - domain: '*.medium.com'
       answer: bibica.net
       enabled: true
+    - domain: medium.com
+      answer: bibica.net
+      enabled: true
     - domain: pornhub.com
       answer: www.pornhub.com
+      enabled: true
+    - domain: redd.it
+      answer: reddit.map.fastly.net
+      enabled: true
+    - domain: www.reddit.com
+      answer: reddit.map.fastly.net
+      enabled: true
+    - domain: upos-hz-mirrorakam.akamaized.net
+      answer: 118.69.16.23
+      enabled: true
+    - domain: upos-hz-mirrorakam.akamaized.net
+      answer: 118.69.16.30
+      enabled: true
+    - domain: v16-webapp-prime.tiktok.com
+      answer: 183.80.211.153
+      enabled: true
+    - domain: v16-webapp-prime.tiktok.com
+      answer: 183.80.211.161
+      enabled: true
+    - domain: v16-webapp-prime.tiktok.com
+      answer: 118.69.17.100
+      enabled: true
+    - domain: v16-webapp-prime.tiktok.com
+      answer: 118.69.17.68
+      enabled: true
+    - domain: upos-hz-mirrorakam.akamaized.net
+      answer: 118.69.17.145
+      enabled: true
+    - domain: upos-hz-mirrorakam.akamaized.net
+      answer: 118.69.17.176
+      enabled: true
+    - domain: v16-webapp-prime.tiktok.com
+      answer: 118.69.16.16
+      enabled: true
+    - domain: v16-webapp-prime.tiktok.com
+      answer: 118.69.16.25
       enabled: true
   safe_fs_patterns:
     - /home/AdGuardHome/userfilters/*
