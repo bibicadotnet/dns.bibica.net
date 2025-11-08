@@ -17,7 +17,7 @@ dns:
     - 0.0.0.0
   port: 53
   anonymize_client_ip: true
-  ratelimit: 0
+  ratelimit: 20
   ratelimit_subnet_len_ipv4: 32
   ratelimit_subnet_len_ipv6: 128
   ratelimit_whitelist: []
@@ -25,6 +25,8 @@ dns:
   upstream_dns:
     - https://208.67.220.220/dns-query
     - https://8.8.8.8/dns-query
+    - '[/bibica.net/]https://dns.mullvad.net/dns-query'
+    - '[/voz.vn/]https://dns.mullvad.net/dns-query'
     - '[/nikke-en.com/]https://dns.mullvad.net/dns-query'
     - '[/github.io/]https://dns.mullvad.net/dns-query'
     - '[/github.com/]https://dns.mullvad.net/dns-query'
@@ -713,7 +715,7 @@ querylog:
   ignored: []
   interval: 24h
   size_memory: 1000
-  enabled: true
+  enabled: false
   file_enabled: false
 statistics:
   dir_path: ""
@@ -796,35 +798,47 @@ filtering:
     - domain: www.reddit.com
       answer: reddit.map.fastly.net
       enabled: true
-    - domain: upos-hz-mirrorakam.akamaized.net
-      answer: 118.69.16.23
+    - domain: upos-sz-mirrorcos.bilivideo.com
+      answer: upos-sz-mirrorcosov.bilivideo.com
+      enabled: true
+    - domain: upos-sz-mirrorcosb.bilivideo.com
+      answer: upos-sz-mirrorcosov.bilivideo.com
+      enabled: true
+    - domain: upos-sz-mirrorbos.bilivideo.com
+      answer: upos-sz-mirrorcosov.bilivideo.com
+      enabled: true
+    - domain: upos-sz-mirrorhw.bilivideo.com
+      answer: upos-sz-mirrorcosov.bilivideo.com
+      enabled: true
+    - domain: upos-sz-mirrorhwb.bilivideo.com
+      answer: upos-sz-mirrorcosov.bilivideo.com
+      enabled: true
+    - domain: upos-sz-upcdnbda2.bilivideo.com
+      answer: upos-sz-mirrorcosov.bilivideo.com
+      enabled: true
+    - domain: upos-sz-upcdnws.bilivideo.com
+      answer: upos-sz-mirrorcosov.bilivideo.com
+      enabled: true
+    - domain: upos-sz-mirrorali.bilivideo.com
+      answer: upos-sz-mirrorcosov.bilivideo.com
+      enabled: true
+    - domain: upos-sz-mirroraliov.bilivideo.com
+      answer: upos-sz-mirrorcosov.bilivideo.com
+      enabled: true
+    - domain: upos-sz-mirror08h.bilivideo.com
+      answer: upos-sz-mirrorcosov.bilivideo.com
       enabled: true
     - domain: upos-hz-mirrorakam.akamaized.net
-      answer: 118.69.16.30
+      answer: upos-sz-mirrorcosov.bilivideo.com
+      enabled: true
+    - domain: upos-sz-mirrorcosov.bilivideo.com
+      answer: 42.115.108.103
       enabled: true
     - domain: v16-webapp-prime.tiktok.com
-      answer: 183.80.211.153
+      answer: 118.69.17.69
       enabled: true
     - domain: v16-webapp-prime.tiktok.com
-      answer: 183.80.211.161
-      enabled: true
-    - domain: v16-webapp-prime.tiktok.com
-      answer: 118.69.17.100
-      enabled: true
-    - domain: v16-webapp-prime.tiktok.com
-      answer: 118.69.17.68
-      enabled: true
-    - domain: upos-hz-mirrorakam.akamaized.net
-      answer: 118.69.17.145
-      enabled: true
-    - domain: upos-hz-mirrorakam.akamaized.net
-      answer: 118.69.17.176
-      enabled: true
-    - domain: v16-webapp-prime.tiktok.com
-      answer: 118.69.16.16
-      enabled: true
-    - domain: v16-webapp-prime.tiktok.com
-      answer: 118.69.16.25
+      answer: 118.69.17.79
       enabled: true
   safe_fs_patterns:
     - /home/AdGuardHome/userfilters/*
