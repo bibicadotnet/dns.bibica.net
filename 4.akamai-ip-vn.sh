@@ -13,8 +13,8 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 # ============================================================================
 
 # AdGuard Home
-AGH_URL="https://xxxxxxx.dns.bibica.net"
-AGH_USER="xxxxxxxxxxxxx"
+AGH_URL="https://xxxxx.xxxxx.xxxx.xxxx"
+AGH_USER="xxxxxx"
 AGH_PASS="xxxxxxxxxxxxxxxxxxxx"
 
 # DNS Query
@@ -34,7 +34,7 @@ PING_TIMEOUT=2            # Ping timeout in seconds
 
 # Domains to manage
 DOMAINS=(
-upos-hz-mirrorakam.akamaized.net
+upos-sz-mirrorcosov.bilivideo.com
 v16-webapp-prime.tiktok.com
 )
 
