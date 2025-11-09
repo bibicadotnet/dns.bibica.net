@@ -715,7 +715,7 @@ querylog:
   ignored: []
   interval: 24h
   size_memory: 1000
-  enabled: false
+  enabled: true
   file_enabled: false
 statistics:
   dir_path: ""
@@ -831,14 +831,14 @@ filtering:
     - domain: upos-hz-mirrorakam.akamaized.net
       answer: upos-sz-mirrorcosov.bilivideo.com
       enabled: true
-    - domain: upos-sz-mirrorcosov.bilivideo.com
-      answer: 42.115.108.103
+    - domain: v19-webapp-prime.tiktok.com
+      answer: v16-webapp-prime.tiktok.com
       enabled: true
     - domain: v16-webapp-prime.tiktok.com
-      answer: 118.69.17.69
+      answer: 118.69.17.55
       enabled: true
     - domain: v16-webapp-prime.tiktok.com
-      answer: 118.69.17.79
+      answer: 118.69.17.76
       enabled: true
   safe_fs_patterns:
     - /home/AdGuardHome/userfilters/*
