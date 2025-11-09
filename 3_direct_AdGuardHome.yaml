@@ -831,14 +831,17 @@ filtering:
     - domain: upos-hz-mirrorakam.akamaized.net
       answer: upos-sz-mirrorcosov.bilivideo.com
       enabled: true
+    - domain: v16-webapp-prime.tiktok.com
+      answer: v19-webapp-prime.tiktok.com
+      enabled: true
+    - domain: v16-webapp-prime.us.tiktok.com
+      answer: v19-webapp-prime.tiktok.com
+      enabled: true
+    - domain: v19-webapp-prime.us.tiktok.com
+      answer: v19-webapp-prime.tiktok.com
+      enabled: true
     - domain: v19-webapp-prime.tiktok.com
-      answer: v16-webapp-prime.tiktok.com
-      enabled: true
-    - domain: v16-webapp-prime.tiktok.com
-      answer: 118.69.17.55
-      enabled: true
-    - domain: v16-webapp-prime.tiktok.com
-      answer: 118.69.17.76
+      answer: bytedance.map.fastly.net
       enabled: true
   safe_fs_patterns:
     - /home/AdGuardHome/userfilters/*
