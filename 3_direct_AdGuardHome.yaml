@@ -840,6 +840,9 @@ filtering:
     - domain: upos-hz-mirrorakam.akamaized.net
       answer: upos-sz-mirrorcosov.bilivideo.com
       enabled: true
+    - domain: upos-sz-staticcos-cmask.bilivideo.com
+      answer: upos-sz-mirrorcosov.bilivideo.com
+      enabled: true
     - domain: v16-webapp-prime.tiktok.com
       answer: v19-webapp-prime.tiktok.com
       enabled: true
@@ -848,9 +851,6 @@ filtering:
       enabled: true
     - domain: v19-webapp-prime.us.tiktok.com
       answer: v19-webapp-prime.tiktok.com
-      enabled: true
-    - domain: upos-sz-staticcos-cmask.bilivideo.com
-      answer: upos-sz-mirrorcosov.bilivideo.com
       enabled: true
   safe_fs_patterns:
     - /home/AdGuardHome/userfilters/*
