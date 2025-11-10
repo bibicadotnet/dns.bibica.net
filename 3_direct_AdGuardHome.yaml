@@ -7,6 +7,15 @@ http:
 users:
   - name: username_xxxxxxx
     password: password_xxxxxxx
+http:
+  pprof:
+    port: 6060
+    enabled: false
+  address: 0.0.0.0:8080
+  session_ttl: 720h
+users:
+  - name: bibica
+    password: $2y$10$mFUcdQ8JZSH8O71rSsgY2.jmms7xZa7HhJQAFIwcS5tgaPf5VZrnu
 auth_attempts: 5
 block_auth_min: 15
 http_proxy: ""
@@ -840,8 +849,8 @@ filtering:
     - domain: v19-webapp-prime.us.tiktok.com
       answer: v19-webapp-prime.tiktok.com
       enabled: true
-    - domain: v19-webapp-prime.tiktok.com
-      answer: bytedance.map.fastly.net
+    - domain: upos-sz-staticcos-cmask.bilivideo.com
+      answer: upos-sz-mirrorcosov.bilivideo.com
       enabled: true
   safe_fs_patterns:
     - /home/AdGuardHome/userfilters/*
