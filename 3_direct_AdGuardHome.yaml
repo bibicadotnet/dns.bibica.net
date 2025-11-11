@@ -63,7 +63,6 @@ dns:
     - '[/msocdn.com/]https://lightnode-sgn-1.edge.nextdns.io/646191'
     - '[/onestore.ms/]https://lightnode-sgn-1.edge.nextdns.io/646191'
     - '[/s-microsoft.com/]https://lightnode-sgn-1.edge.nextdns.io/646191'
-    - '[/office.net/]https://lightnode-sgn-1.edge.nextdns.io/646191'
     - '[/avcdn.net/]https://lightnode-sgn-1.edge.nextdns.io/646191'
     - '[/ibytedtos.com/]https://lightnode-sgn-1.edge.nextdns.io/646191'
     - '[/tiktokcdn.com/]https://lightnode-sgn-1.edge.nextdns.io/646191'
@@ -123,7 +122,6 @@ dns:
     - '[/garena.com/]https://lightnode-sgn-1.edge.nextdns.io/646191'
     - '[/disneyplus.com/]https://lightnode-sgn-1.edge.nextdns.io/646191'
     - '[/msftncsi.com/]https://lightnode-sgn-1.edge.nextdns.io/646191'
-    - '[/disneyplus.com/]https://lightnode-sgn-1.edge.nextdns.io/646191'
     - '[/capcutapi.com/]https://lightnode-sgn-1.edge.nextdns.io/646191'
     - '[/capcut.com/]https://lightnode-sgn-1.edge.nextdns.io/646191'
     - '[/capcutcdn-us.com/]https://lightnode-sgn-1.edge.nextdns.io/646191'
@@ -147,7 +145,7 @@ dns:
     - '[/adobedtm.com/]https://lightnode-sgn-1.edge.nextdns.io/646191'
     - '[/digicert.com/]https://lightnode-sgn-1.edge.nextdns.io/646191'
     - '[/cloud.microsoft/]https://lightnode-sgn-1.edge.nextdns.io/646191'
-    - '[/xxxx.com/]https://lightnode-sgn-1.edge.nextdns.io/646191'
+    - '[/me.com/]https://lightnode-sgn-1.edge.nextdns.io/646191'
     - '# All CDN'
     - '[/fastly.net/]https://8.8.8.8/dns-query'
     - '[/fastlylb.net/]https://8.8.8.8/dns-query'
@@ -351,7 +349,6 @@ dns:
     - '[/jwpcdn.com/]https://8.8.8.8/dns-query'
     - '[/jwplatform.com/]https://8.8.8.8/dns-query'
     - '[/jwplayer.com/]https://8.8.8.8/dns-query'
-    - '[/jwpltx.com/]https://8.8.8.8/dns-query'
     - '[/jwpsrv.com/]https://8.8.8.8/dns-query'
     - '[/jvc.gg/]https://8.8.8.8/dns-query'
     - '[/kaltura.com/]https://8.8.8.8/dns-query'
@@ -812,7 +809,6 @@ whitelist_filters:
     name: Allowlist
     id: 1760504975
 user_rules:
-  - '||www.163.com^$client=''14.191.0.0'''
   - ""
 dhcp:
   enabled: false
