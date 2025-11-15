@@ -23,10 +23,8 @@ dns:
   ratelimit_whitelist: []
   refuse_any: true
   upstream_dns:
-    - https://8.8.4.4/dns-query
-    - https://8.8.8.8/dns-query
+    - https://iabucttpma.cloudflare-gateway.com/dns-query
     - '[/nikke-en.com/]https://dns.mullvad.net/dns-query'
-    - '[/github.com/]https://dns.mullvad.net/dns-query'
   upstream_dns_file: ""
   bootstrap_dns:
     - 8.8.8.8
@@ -176,50 +174,11 @@ filtering:
     - domain: www.reddit.com
       answer: reddit.map.fastly.net
       enabled: true
-    - domain: upos-sz-mirrorcos.bilivideo.com
-      answer: upos-sz-mirrorcosov.bilivideo.com
-      enabled: true
-    - domain: upos-sz-mirrorcosb.bilivideo.com
-      answer: upos-sz-mirrorcosov.bilivideo.com
-      enabled: true
-    - domain: upos-sz-mirrorbos.bilivideo.com
-      answer: upos-sz-mirrorcosov.bilivideo.com
-      enabled: true
-    - domain: upos-sz-mirrorhw.bilivideo.com
-      answer: upos-sz-mirrorcosov.bilivideo.com
-      enabled: true
-    - domain: upos-sz-mirrorhwb.bilivideo.com
-      answer: upos-sz-mirrorcosov.bilivideo.com
-      enabled: true
-    - domain: upos-sz-upcdnbda2.bilivideo.com
-      answer: upos-sz-mirrorcosov.bilivideo.com
-      enabled: true
-    - domain: upos-sz-upcdnws.bilivideo.com
-      answer: upos-sz-mirrorcosov.bilivideo.com
-      enabled: true
-    - domain: upos-sz-mirrorali.bilivideo.com
-      answer: upos-sz-mirrorcosov.bilivideo.com
-      enabled: true
-    - domain: upos-sz-mirroraliov.bilivideo.com
-      answer: upos-sz-mirrorcosov.bilivideo.com
-      enabled: true
-    - domain: upos-sz-mirror08h.bilivideo.com
-      answer: upos-sz-mirrorcosov.bilivideo.com
-      enabled: true
-    - domain: upos-hz-mirrorakam.akamaized.net
-      answer: upos-sz-mirrorcosov.bilivideo.com
+    - domain: v19-webapp-prime.tiktok.com
+      answer: v16-webapp-prime.tiktok.com
       enabled: true
     - domain: upos-sz-staticcos-cmask.bilivideo.com
       answer: upos-sz-mirrorcosov.bilivideo.com
-      enabled: true
-    - domain: v16-webapp-prime.tiktok.com
-      answer: v19-webapp-prime.tiktok.com
-      enabled: true
-    - domain: v16-webapp-prime.us.tiktok.com
-      answer: v19-webapp-prime.tiktok.com
-      enabled: true
-    - domain: v19-webapp-prime.us.tiktok.com
-      answer: v19-webapp-prime.tiktok.com
       enabled: true
   safe_fs_patterns:
     - /home/AdGuardHome/userfilters/*
