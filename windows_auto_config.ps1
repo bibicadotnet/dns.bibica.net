@@ -293,6 +293,12 @@ rsload.net
 vn.linkedin.com
 medium.com
 steamcommunity.com
+bilibili.tv
+www.bilibili.tv
+www.bbc.com
+bbc.com
+www.bbc.co.uk
+bbc.co.uk
 "@ | Out-File "$goodbyedpiPath\blacklist.txt" -Encoding UTF8
 
 # VBS startup launcher
