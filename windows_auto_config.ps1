@@ -299,6 +299,8 @@ www.bbc.com
 bbc.com
 www.bbc.co.uk
 bbc.co.uk
+www.xvideos.com
+xvideos.com
 "@ | Out-File "$goodbyedpiPath\blacklist.txt" -Encoding UTF8
 
 # VBS startup launcher
