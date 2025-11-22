@@ -23,14 +23,15 @@ dns:
   ratelimit_whitelist: []
   refuse_any: true
   upstream_dns:
-    - https://iabucttpma.cloudflare-gateway.com/dns-query
-    - '[/nikke-en.com/]https://dns.mullvad.net/dns-query'
+    - https://bu0eg1tdzu.cloudflare-gateway.com/dns-query
+    - '[/nikke-en.com/]https://64mieu1dce.cloudflare-gateway.com/dns-query'
   upstream_dns_file: ""
   bootstrap_dns:
     - 8.8.8.8
     - 1.1.1.1
   fallback_dns:
     - https://9.9.9.11/dns-query
+    - https://8.8.8.8/dns-query
   upstream_mode: parallel
   fastest_timeout: 1s
   allowed_clients: []
@@ -89,7 +90,7 @@ tls:
 querylog:
   dir_path: ""
   ignored: []
-  interval: 24h
+  interval: 2160h
   size_memory: 1000
   enabled: true
   file_enabled: false
@@ -111,12 +112,21 @@ filters:
     url: https://raw.githubusercontent.com/bibicadotnet/AdGuard-Home-blocklists/refs/heads/main/byme.txt
     name: CocCoc & MSN Domains
     id: 1760504974
+  - enabled: true
+    url: https://raw.githubusercontent.com/VeleSila/yhosts/master/hosts
+    name: China
+    id: 1763371876
+  - enabled: true
+    url: https://badmojr.github.io/1Hosts/Lite/adblock.txt
+    name: 1Hosts (Lite)
+    id: 1763371877
 whitelist_filters:
   - enabled: true
     url: https://raw.githubusercontent.com/bibicadotnet/AdGuard-Home-blocklists/refs/heads/main/whitelist.txt
     name: Allowlist
     id: 1760504975
 user_rules:
+  - '||www.163.com^$client=''14.191.0.0'''
   - ""
 dhcp:
   enabled: false
@@ -158,12 +168,6 @@ filtering:
   rewrites:
     - domain: imgur.com
       answer: imgur.map.fastly.net
-      enabled: true
-    - domain: '*.medium.com'
-      answer: bibica.net
-      enabled: true
-    - domain: medium.com
-      answer: bibica.net
       enabled: true
     - domain: pornhub.com
       answer: www.pornhub.com
