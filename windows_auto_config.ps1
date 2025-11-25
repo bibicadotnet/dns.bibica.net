@@ -391,6 +391,42 @@ $shortcut.Save()
 
 Remove-Item $tempPath -Recurse -Force -ErrorAction SilentlyContinue
 
+# ==================== Ensure hosts file exists ====================
+
+$hostsPath = "$env:SystemRoot\System32\drivers\etc\hosts"
+if (-not (Test-Path $hostsPath)) {
+    Write-Host "Hosts file not found, creating default..." -ForegroundColor Yellow
+    try {
+        $defaultHosts = @"
+# Copyright (c) 1993-2009 Microsoft Corp.
+#
+# This is a sample HOSTS file used by Microsoft TCP/IP for Windows.
+#
+# This file contains the mappings of IP addresses to host names. Each
+# entry should be kept on an individual line. The IP address should
+# be placed in the first column followed by the corresponding host name.
+# The IP address and the host name should be separated by at least one
+# space.
+#
+# Additionally, comments (such as these) may be inserted on individual
+# lines or following the machine name denoted by a '#' symbol.
+#
+# For example:
+#
+#      102.54.94.97     rhino.acme.com          # source server
+#       38.25.63.10     x.acme.com              # x client host
+
+# localhost name resolution is handled within DNS itself.
+#	127.0.0.1       localhost
+#	::1             localhost
+"@
+        $defaultHosts | Out-File $hostsPath -Encoding ASCII -Force
+        Write-Host "  Hosts file created successfully" -ForegroundColor Green
+    } catch {
+        Write-Host "  WARNING: Could not create hosts file: $_" -ForegroundColor Yellow
+    }
+}
+
 # ==================== Start Services ====================
 
 Write-Host "Starting services..." -ForegroundColor Gray
