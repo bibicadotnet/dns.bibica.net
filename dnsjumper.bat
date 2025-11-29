@@ -1,6 +1,6 @@
 @echo off
 chcp 65001 >nul
-title DNS Changer
+title DNS Jumper v1.0
 
 :: Auto elevate to Admin
 net session >nul 2>&1
@@ -12,7 +12,7 @@ if %errorlevel% neq 0 (
 :MENU
 cls
 echo ============================================
-echo           DNS Jumper
+echo           DNS Jumper v1.0
 echo ============================================
 echo.
 echo 1. dns.bibica.net (127.0.0.1)
