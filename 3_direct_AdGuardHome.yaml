@@ -23,15 +23,17 @@ dns:
   ratelimit_whitelist: []
   refuse_any: true
   upstream_dns:
+    - '# Tài khoản chính'
     - https://bu0eg1tdzu.cloudflare-gateway.com/dns-query
+    - '# Tài khoản doh-bibica-net'
+    - https://97nsi83nhg.cloudflare-gateway.com/dns-query
     - '[/nikke-en.com/]https://64mieu1dce.cloudflare-gateway.com/dns-query'
   upstream_dns_file: ""
   bootstrap_dns:
     - 8.8.8.8
     - 1.1.1.1
   fallback_dns:
-    - https://9.9.9.11/dns-query
-    - https://8.8.8.8/dns-query
+    - https://iabucttpma.cloudflare-gateway.com/dns-query
   upstream_mode: parallel
   fastest_timeout: 1s
   allowed_clients: []
@@ -44,7 +46,7 @@ dns:
     - 127.0.0.0/8
     - ::1/128
   cache_enabled: true
-  cache_size: 124288000
+  cache_size: 536870912
   cache_ttl_min: 0
   cache_ttl_max: 0
   cache_optimistic: true
@@ -90,9 +92,9 @@ tls:
 querylog:
   dir_path: ""
   ignored: []
-  interval: 2160h
+  interval: 24h
   size_memory: 1000
-  enabled: true
+  enabled: false
   file_enabled: false
 statistics:
   dir_path: ""
@@ -183,6 +185,12 @@ filtering:
       enabled: true
     - domain: upos-sz-staticcos-cmask.bilivideo.com
       answer: upos-sz-mirrorcosov.bilivideo.com
+      enabled: true
+    - domain: medium.com
+      answer: rocket.net
+      enabled: true
+    - domain: www.medium.com
+      answer: rocket.net
       enabled: true
   safe_fs_patterns:
     - /home/AdGuardHome/userfilters/*
