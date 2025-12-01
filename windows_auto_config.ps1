@@ -8,7 +8,7 @@ Clear-Host
 # Configuration
 $installPath = "C:\dns-bibica-net-doh"
 $dnsproxyPath = "$installPath\dnsproxy"
-$goodbyedpiPath = "$installPath\GoodbyeDPI"
+$zapretPath = "$installPath\zapret"
 $tempPath = "$env:TEMP\dnsproxy-setup"
 $backupFile = "$installPath\dns-backup.txt"
 $startupPath = "$env:APPDATA\Microsoft\Windows\Start Menu\Programs\Startup"
@@ -20,7 +20,7 @@ Write-Host ""
 # ==================== Functions ====================
 
 function Stop-AllServices {
-    @("dnsproxy", "goodbyedpi") | ForEach-Object {
+    @("dnsproxy", "goodbyedpi", "winws") | ForEach-Object {
         Get-Process -Name $_ -ErrorAction SilentlyContinue | Stop-Process -Force
     }
     Get-WmiObject Win32_Process | Where-Object {
@@ -127,6 +127,25 @@ function Download-GitHubRelease {
     }
 }
 
+function Download-ZapretFiles {
+    Write-Host "Downloading Zapret..." -ForegroundColor Gray
+    
+    $baseUrl = "https://raw.githubusercontent.com/bibicadotnet/zapret-win-bundle/master/zapret-winws"
+    $files = @("cygwin1.dll", "WinDivert.dll", "WinDivert64.sys", "winws.exe")
+    
+    try {
+        foreach ($file in $files) {
+            $url = "$baseUrl/$file"
+            $destPath = "$zapretPath\$file"
+            Write-Host "  Downloading $file..." -ForegroundColor DarkGray
+            (New-Object System.Net.WebClient).DownloadFile($url, $destPath)
+        }
+        Write-Host "  Zapret files downloaded successfully" -ForegroundColor Green
+    } catch {
+        throw "Failed to download Zapret files: $_"
+    }
+}
+
 # ==================== Check Existing Installation ====================
 
 $isReinstall = Test-Path $installPath
@@ -166,7 +185,7 @@ if ($isReinstall) {
 
 # ==================== Complete Cleanup ====================
 
-$needCleanup = (Test-Path $installPath) -or (Test-Path $startupShortcut) -or (Get-Process -Name @("dnsproxy", "goodbyedpi") -ErrorAction SilentlyContinue)
+$needCleanup = (Test-Path $installPath) -or (Test-Path $startupShortcut) -or (Get-Process -Name @("dnsproxy", "winws") -ErrorAction SilentlyContinue)
 
 if ($needCleanup) {
     Write-Host "Cleaning up previous installation..." -ForegroundColor Gray
@@ -175,7 +194,7 @@ if ($needCleanup) {
 Stop-AllServices
 if (Test-Path $startupShortcut) { Remove-Item $startupShortcut -Force -ErrorAction SilentlyContinue }
 
-Wait-ProcessStopped -ProcessNames @("dnsproxy", "goodbyedpi") | Out-Null
+Wait-ProcessStopped -ProcessNames @("dnsproxy", "winws") | Out-Null
 Unload-WinDivertDriver
 Start-Sleep -Milliseconds 500
 
@@ -218,7 +237,7 @@ foreach ($adapter in $adapters) {
 if (Test-Path $tempPath) { Remove-Item $tempPath -Recurse -Force -ErrorAction SilentlyContinue }
 New-Item -ItemType Directory -Path $installPath -Force | Out-Null
 New-Item -ItemType Directory -Path $dnsproxyPath -Force | Out-Null
-New-Item -ItemType Directory -Path $goodbyedpiPath -Force | Out-Null
+New-Item -ItemType Directory -Path $zapretPath -Force | Out-Null
 New-Item -ItemType Directory -Path $tempPath -Force | Out-Null
 
 # Save DNS backup
@@ -238,25 +257,8 @@ try {
     if (-not $exePath) { throw "dnsproxy.exe not found" }
     Copy-Item $exePath.FullName "$dnsproxyPath\dnsproxy.exe" -Force
     
-    # Download GoodbyeDPI
-    $goodbyedpiTemp = Download-GitHubRelease `
-        -Repo "ValdikSS/GoodbyeDPI" `
-        -AssetPattern "*.zip" `
-        -DestPath $tempPath `
-        -DisplayName "GoodbyeDPI" `
-        -IncludePreRelease
-    
-    $goodbyeExe = Get-ChildItem -Path $goodbyedpiTemp -Filter "goodbyedpi.exe" -Recurse | Where-Object { $_.Directory.Name -eq "x86_64" } | Select-Object -First 1
-    $winDivertDll = Get-ChildItem -Path $goodbyedpiTemp -Filter "WinDivert.dll" -Recurse | Where-Object { $_.Directory.Name -eq "x86_64" } | Select-Object -First 1
-    $winDivertSys = Get-ChildItem -Path $goodbyedpiTemp -Filter "WinDivert64.sys" -Recurse | Where-Object { $_.Directory.Name -eq "x86_64" } | Select-Object -First 1
-    
-    if (-not $goodbyeExe -or -not $winDivertDll -or -not $winDivertSys) {
-        throw "GoodbyeDPI files not found"
-    }
-    
-    Copy-Item $goodbyeExe.FullName "$goodbyedpiPath\goodbyedpi.exe" -Force
-    Copy-Item $winDivertDll.FullName "$goodbyedpiPath\WinDivert.dll" -Force
-    Copy-Item $winDivertSys.FullName "$goodbyedpiPath\WinDivert64.sys" -Force
+    # Download Zapret files
+    Download-ZapretFiles
     
 } catch {
     Write-Host ""
@@ -285,7 +287,7 @@ cache-optimistic: true
 
 New-Item -ItemType File -Path "$dnsproxyPath\dnsproxy.log" -Force | Out-Null
 
-# Create GoodbyeDPI blacklist
+# Create Zapret blacklist
 @"
 pornhub.com
 www.pornhub.com
@@ -301,7 +303,7 @@ www.bbc.co.uk
 bbc.co.uk
 www.xvideos.com
 xvideos.com
-"@ | Out-File "$goodbyedpiPath\blacklist.txt" -Encoding UTF8
+"@ | Out-File "$zapretPath\blacklist.txt" -Encoding UTF8
 
 # VBS startup launcher
 @"
@@ -309,7 +311,7 @@ Set ws = CreateObject("WScript.Shell")
 Set objWMIService = GetObject("winmgmts:\\.\root\cimv2")
 
 On Error Resume Next
-Set colProcesses = objWMIService.ExecQuery("SELECT * FROM Win32_Process WHERE Name = 'dnsproxy.exe' OR Name = 'goodbyedpi.exe'")
+Set colProcesses = objWMIService.ExecQuery("SELECT * FROM Win32_Process WHERE Name = 'dnsproxy.exe' OR Name = 'winws.exe'")
 For Each objProcess in colProcesses
     objProcess.Terminate()
 Next
@@ -317,8 +319,8 @@ On Error GoTo 0
 
 WScript.Sleep 1000
 
-ws.CurrentDirectory = "$goodbyedpiPath"
-ws.Run "goodbyedpi.exe -9 --blacklist blacklist.txt", 0, False
+ws.CurrentDirectory = "$zapretPath"
+ws.Run "winws.exe --wf-tcp=80,443 --wf-udp=443 --hostlist=blacklist.txt --dpi-desync=fake,disorder2 --dpi-desync-fooling=md5sig,badseq --dpi-desync-repeats=6", 0, False
 
 WScript.Sleep 2000
 
@@ -340,7 +342,7 @@ echo.
 
 echo Stopping services...
 taskkill /F /IM dnsproxy.exe >nul 2>&1
-taskkill /F /IM goodbyedpi.exe >nul 2>&1
+taskkill /F /IM winws.exe >nul 2>&1
 for /f "tokens=2" %%a in ('wmic process where "name='wscript.exe' and commandline like '%%dns-bibica-net-startup.vbs%%'" get processid 2^>nul ^| findstr /r "[0-9]"') do taskkill /F /PID %%a >nul 2>&1
 timeout /t 2 /nobreak >nul
 
@@ -435,7 +437,7 @@ Start-Process "wscript.exe" -ArgumentList "`"$installPath\dns-bibica-net-startup
 # ==================== Verify Services ====================
 
 Write-Host "Verifying services..." -ForegroundColor Gray
-if (-not (Wait-ProcessStarted -ProcessNames @("dnsproxy", "goodbyedpi") -TimeoutSeconds 5)) {
+if (-not (Wait-ProcessStarted -ProcessNames @("dnsproxy", "winws") -TimeoutSeconds 5)) {
     Write-Host ""
     Write-Host "ERROR: Services failed to start" -ForegroundColor Red
     Write-Host "Restoring DNS settings..." -ForegroundColor Yellow
@@ -470,7 +472,6 @@ if (-not (Wait-ProcessStarted -ProcessNames @("dnsproxy", "goodbyedpi") -Timeout
 
 # ==================== Test DNS ====================
 
-#Write-Host "Testing DNS service..." -ForegroundColor Gray
 if (-not (Test-LocalDNS -TimeoutSeconds 5)) {
     Write-Host ""
     Write-Host "ERROR: DNS service not responding" -ForegroundColor Red
@@ -523,7 +524,7 @@ Write-Host "========================================" -ForegroundColor Cyan
 Write-Host "Installation complete!" -ForegroundColor Green
 Write-Host "========================================" -ForegroundColor Cyan
 Write-Host ""
-Write-Host "System DNS: 127.0.0.1 (dns.bibica.net DoH + DPI bypass)" -ForegroundColor White
+Write-Host "System DNS: 127.0.0.1 (dns.bibica.net DoH + Zapret DPI bypass)" -ForegroundColor White
 Write-Host "Services: Running and auto-start enabled" -ForegroundColor Green
 Write-Host ""
 Write-Host "Install location: $installPath" -ForegroundColor Gray
