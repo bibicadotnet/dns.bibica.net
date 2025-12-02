@@ -1,6 +1,6 @@
 {
   "version": 2,
   "routes": [
-      {"src": "/(.*)","dest": "https://8.8.8.8/dns-query"}
+      {"src": "/(.*)","dest": "https://bu0eg1tdzu.cloudflare-gateway.com/dns-query"}
   ]
 }
