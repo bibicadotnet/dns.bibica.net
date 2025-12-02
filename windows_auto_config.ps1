@@ -20,7 +20,7 @@ Write-Host ""
 # ==================== Functions ====================
 
 function Stop-AllServices {
-    @("dnsproxy", "goodbyedpi", "winws") | ForEach-Object {
+    @("dnsproxy", "winws") | ForEach-Object {
         Get-Process -Name $_ -ErrorAction SilentlyContinue | Stop-Process -Force
     }
     Get-WmiObject Win32_Process | Where-Object {
@@ -92,6 +92,42 @@ function Set-FallbackDNS {
     }
 }
 
+function Restore-DNSFromBackup {
+    param([string]$BackupFilePath)
+    
+    if (-not (Test-Path $BackupFilePath)) {
+        return $false
+    }
+    
+    try {
+        $backup = Import-Csv -Path $BackupFilePath -Encoding UTF8
+        foreach ($item in $backup) {
+            try {
+                # Restore IPv4
+                $dnsServersV4 = $item.DNSv4 -split ','
+                if ($dnsServersV4[0] -eq 'DHCP' -or $dnsServersV4[0] -eq '') {
+                    Set-DnsClientServerAddress -InterfaceIndex $item.InterfaceIndex -ResetServerAddresses -ErrorAction Stop
+                } else {
+                    Set-DnsClientServerAddress -InterfaceIndex $item.InterfaceIndex -ServerAddresses $dnsServersV4 -ErrorAction Stop
+                }
+                
+                # Restore IPv6
+                if ($item.DNSv6 -and $item.DNSv6 -ne '') {
+                    $dnsServersV6 = $item.DNSv6 -split ','
+                    if ($dnsServersV6[0] -eq 'DHCP' -or $dnsServersV6[0] -eq '') {
+                        Set-DnsClientServerAddress -InterfaceIndex $item.InterfaceIndex -AddressFamily IPv6 -ResetServerAddresses -ErrorAction SilentlyContinue
+                    } else {
+                        Set-DnsClientServerAddress -InterfaceIndex $item.InterfaceIndex -AddressFamily IPv6 -ServerAddresses $dnsServersV6 -ErrorAction SilentlyContinue
+                    }
+                }
+            } catch {}
+        }
+        return $true
+    } catch {
+        return $false
+    }
+}
+
 function Download-GitHubRelease {
     param(
         [string]$Repo,
@@ -130,17 +166,15 @@ function Download-GitHubRelease {
 function Download-ZapretFiles {
     Write-Host "Downloading Zapret..." -ForegroundColor Gray
     
-    $baseUrl = "https://raw.githubusercontent.com/bibicadotnet/zapret-win-bundle/master/zapret-winws"
+    $baseUrl = "https://raw.githubusercontent.com/bol-van/zapret-win-bundle/master/zapret-winws"
     $files = @("cygwin1.dll", "WinDivert.dll", "WinDivert64.sys", "winws.exe")
     
     try {
         foreach ($file in $files) {
             $url = "$baseUrl/$file"
             $destPath = "$zapretPath\$file"
-            Write-Host "  Downloading $file..." -ForegroundColor DarkGray
             (New-Object System.Net.WebClient).DownloadFile($url, $destPath)
         }
-        Write-Host "  Zapret files downloaded successfully" -ForegroundColor Green
     } catch {
         throw "Failed to download Zapret files: $_"
     }
@@ -153,32 +187,10 @@ $isReinstall = Test-Path $installPath
 if ($isReinstall) {
     Write-Host "Found existing installation, restoring DNS..." -ForegroundColor Gray
     
-    # Thử restore từ backup file
-    $dnsRestored = $false
-    if (Test-Path $backupFile) {
-        try {
-            $existingBackup = Import-Csv -Path $backupFile -Encoding UTF8
-            foreach ($item in $existingBackup) {
-                try {
-                    $dnsServers = $item.DNS -split ','
-                    if ($dnsServers[0] -eq 'DHCP' -or $dnsServers[0] -eq '') {
-                        Set-DnsClientServerAddress -InterfaceIndex $item.InterfaceIndex -ResetServerAddresses -ErrorAction Stop
-                    } else {
-                        Set-DnsClientServerAddress -InterfaceIndex $item.InterfaceIndex -ServerAddresses $dnsServers -ErrorAction Stop
-                    }
-                } catch {}
-            }
-            $dnsRestored = $true
-            Write-Host "  DNS restored from backup" -ForegroundColor Green
-        } catch {
-            Write-Host "  WARNING: Could not restore DNS from backup file" -ForegroundColor Yellow
-        }
+    if (Restore-DNSFromBackup -BackupFilePath $backupFile) {
+        Write-Host "  DNS restored from backup (IPv4 & IPv6)" -ForegroundColor Green
     } else {
-        Write-Host "  WARNING: Backup file not found" -ForegroundColor Yellow
-    }
-    
-    # Nếu không restore được, set DNS fallback
-    if (-not $dnsRestored) {
+        Write-Host "  WARNING: Could not restore DNS from backup file" -ForegroundColor Yellow
         Set-FallbackDNS
     }
 }
@@ -223,12 +235,19 @@ Write-Host "Backing up current DNS settings..." -ForegroundColor Gray
 $dnsBackup = @()
 $adapters = Get-AllAdapters
 foreach ($adapter in $adapters) {
-    $dnsServers = (Get-DnsClientServerAddress -InterfaceIndex $adapter.ifIndex -AddressFamily IPv4 -ErrorAction SilentlyContinue).ServerAddresses
-    $dnsString = if ($null -eq $dnsServers -or $dnsServers.Count -eq 0) { "DHCP" } else { ($dnsServers -join ",") }
+    # Backup IPv4 DNS
+    $dnsServersV4 = (Get-DnsClientServerAddress -InterfaceIndex $adapter.ifIndex -AddressFamily IPv4 -ErrorAction SilentlyContinue).ServerAddresses
+    $dnsStringV4 = if ($null -eq $dnsServersV4 -or $dnsServersV4.Count -eq 0) { "DHCP" } else { ($dnsServersV4 -join ",") }
+    
+    # Backup IPv6 DNS
+    $dnsServersV6 = (Get-DnsClientServerAddress -InterfaceIndex $adapter.ifIndex -AddressFamily IPv6 -ErrorAction SilentlyContinue).ServerAddresses
+    $dnsStringV6 = if ($null -eq $dnsServersV6 -or $dnsServersV6.Count -eq 0) { "DHCP" } else { ($dnsServersV6 -join ",") }
+    
     $dnsBackup += [PSCustomObject]@{
         Name = $adapter.Name
         InterfaceIndex = $adapter.ifIndex
-        DNS = $dnsString
+        DNSv4 = $dnsStringV4
+        DNSv6 = $dnsStringV6
     }
 }
 
@@ -361,7 +380,7 @@ del "$startupShortcut" >nul 2>&1
 
 echo Restoring DNS...
 if exist "$backupFile" (
-    powershell -NoProfile -ExecutionPolicy Bypass -Command "try { Import-Csv '$backupFile' -Encoding UTF8 | ForEach-Object { try { `$dns = `$_.DNS -split ','; if (`$dns[0] -eq 'DHCP' -or `$dns[0] -eq '') { Set-DnsClientServerAddress -InterfaceIndex `$_.InterfaceIndex -ResetServerAddresses -ErrorAction Stop; Write-Host '  ' `$_.Name ': DHCP' } else { Set-DnsClientServerAddress -InterfaceIndex `$_.InterfaceIndex -ServerAddresses `$dns -ErrorAction Stop; Write-Host '  ' `$_.Name ': ' (`$dns -join ', ') } } catch {} } } catch { Write-Host '  Backup file error, setting fallback DNS...' -ForegroundColor Yellow; Get-NetAdapter | Where-Object { `$_.InterfaceDescription -notlike '*Loopback*' } | ForEach-Object { try { Set-DnsClientServerAddress -InterfaceIndex `$_.ifIndex -ServerAddresses @('8.8.8.8', '1.1.1.1') -ErrorAction Stop; Write-Host '  ' `$_.Name ': 8.8.8.8, 1.1.1.1' } catch {} } }"
+    powershell -NoProfile -ExecutionPolicy Bypass -Command "try { Import-Csv '$backupFile' -Encoding UTF8 | ForEach-Object { try { `$dnsV4 = `$_.DNSv4 -split ','; if (`$dnsV4[0] -eq 'DHCP' -or `$dnsV4[0] -eq '') { Set-DnsClientServerAddress -InterfaceIndex `$_.InterfaceIndex -ResetServerAddresses -ErrorAction Stop; Write-Host '  ' `$_.Name ' (IPv4): DHCP' } else { Set-DnsClientServerAddress -InterfaceIndex `$_.InterfaceIndex -ServerAddresses `$dnsV4 -ErrorAction Stop; Write-Host '  ' `$_.Name ' (IPv4): ' (`$dnsV4 -join ', ') }; if (`$_.DNSv6 -and `$_.DNSv6 -ne '') { `$dnsV6 = `$_.DNSv6 -split ','; if (`$dnsV6[0] -eq 'DHCP' -or `$dnsV6[0] -eq '') { Set-DnsClientServerAddress -InterfaceIndex `$_.InterfaceIndex -AddressFamily IPv6 -ResetServerAddresses -ErrorAction SilentlyContinue; Write-Host '  ' `$_.Name ' (IPv6): DHCP' } else { Set-DnsClientServerAddress -InterfaceIndex `$_.InterfaceIndex -AddressFamily IPv6 -ServerAddresses `$dnsV6 -ErrorAction SilentlyContinue; Write-Host '  ' `$_.Name ' (IPv6): ' (`$dnsV6 -join ', ') } } } catch {} } } catch { Write-Host '  Backup file error, setting fallback DNS...' -ForegroundColor Yellow; Get-NetAdapter | Where-Object { `$_.InterfaceDescription -notlike '*Loopback*' } | ForEach-Object { try { Set-DnsClientServerAddress -InterfaceIndex `$_.ifIndex -ServerAddresses @('8.8.8.8', '1.1.1.1') -ErrorAction Stop; Write-Host '  ' `$_.Name ': 8.8.8.8, 1.1.1.1' } catch {} } }"
 ) else (
     echo   No backup file found, setting fallback DNS...
     powershell -NoProfile -ExecutionPolicy Bypass -Command "Get-NetAdapter | Where-Object { `$_.InterfaceDescription -notlike '*Loopback*' } | ForEach-Object { try { Set-DnsClientServerAddress -InterfaceIndex `$_.ifIndex -ServerAddresses @('8.8.8.8', '1.1.1.1') -ErrorAction Stop; Write-Host '  ' `$_.Name ': 8.8.8.8, 1.1.1.1' } catch {} }"
@@ -443,23 +462,8 @@ if (-not (Wait-ProcessStarted -ProcessNames @("dnsproxy", "winws") -TimeoutSecon
     Write-Host "ERROR: Services failed to start" -ForegroundColor Red
     Write-Host "Restoring DNS settings..." -ForegroundColor Yellow
 
-    if (Test-Path $backupFile) {
-        try {
-            $backup = Import-Csv -Path $backupFile -Encoding UTF8
-            foreach ($item in $backup) {
-                try {
-                    $dnsServers = $item.DNS -split ','
-                    if ($dnsServers[0] -eq 'DHCP' -or $dnsServers[0] -eq '') {
-                        Set-DnsClientServerAddress -InterfaceIndex $item.InterfaceIndex -ResetServerAddresses -ErrorAction Stop
-                    } else {
-                        Set-DnsClientServerAddress -InterfaceIndex $item.InterfaceIndex -ServerAddresses $dnsServers -ErrorAction Stop
-                    }
-                } catch {}
-            }
-            Write-Host "DNS restored successfully" -ForegroundColor Green
-        } catch {
-            Set-FallbackDNS
-        }
+    if (Restore-DNSFromBackup -BackupFilePath $backupFile) {
+        Write-Host "DNS restored successfully" -ForegroundColor Green
     } else {
         Set-FallbackDNS
     }
@@ -480,23 +484,8 @@ if (-not (Test-LocalDNS -TimeoutSeconds 5)) {
     
     Stop-AllServices
 
-    if (Test-Path $backupFile) {
-        try {
-            $backup = Import-Csv -Path $backupFile -Encoding UTF8
-            foreach ($item in $backup) {
-                try {
-                    $dnsServers = $item.DNS -split ','
-                    if ($dnsServers[0] -eq 'DHCP' -or $dnsServers[0] -eq '') {
-                        Set-DnsClientServerAddress -InterfaceIndex $item.InterfaceIndex -ResetServerAddresses -ErrorAction Stop
-                    } else {
-                        Set-DnsClientServerAddress -InterfaceIndex $item.InterfaceIndex -ServerAddresses $dnsServers -ErrorAction Stop
-                    }
-                } catch {}
-            }
-            Write-Host "DNS restored successfully" -ForegroundColor Green
-        } catch {
-            Set-FallbackDNS
-        }
+    if (Restore-DNSFromBackup -BackupFilePath $backupFile) {
+        Write-Host "DNS restored successfully" -ForegroundColor Green
     } else {
         Set-FallbackDNS
     }
@@ -513,9 +502,17 @@ if (-not (Test-LocalDNS -TimeoutSeconds 5)) {
 Write-Host "Configuring system DNS..." -ForegroundColor Gray
 $adapters = Get-AllAdapters
 foreach ($adapter in $adapters) {
+    $adapterName = $adapter.Name
+    $ifIndex = $adapter.ifIndex
+    
     try {
-        Set-DnsClientServerAddress -InterfaceIndex $adapter.ifIndex -ServerAddresses "127.0.0.1" -ErrorAction Stop
-    } catch {}
+        # Set IPv4 DNS to 127.0.0.1
+        Set-DnsClientServerAddress -InterfaceIndex $ifIndex -ServerAddresses "127.0.0.1" -ErrorAction Stop
+        netsh interface ipv6 delete dnsserver name="$adapterName" all 2>$null | Out-Null
+        netsh interface ipv6 delete dnsserver interface=$ifIndex all 2>$null | Out-Null
+    } catch {
+        Write-Host "  WARNING: Could not configure DNS for $adapterName" -ForegroundColor Yellow
+    }
 }
 
 # ==================== Flush DNS Cache ====================
@@ -524,7 +521,6 @@ Write-Host "Flushing DNS cache..." -ForegroundColor Gray
 try {
     Clear-DnsClientCache -ErrorAction Stop
     ipconfig /flushdns | Out-Null
-    Write-Host "  DNS cache cleared successfully" -ForegroundColor Green
 } catch {
     Write-Host "  WARNING: Could not flush DNS cache: $_" -ForegroundColor Yellow
 }
