@@ -518,6 +518,17 @@ foreach ($adapter in $adapters) {
     } catch {}
 }
 
+# ==================== Flush DNS Cache ====================
+
+Write-Host "Flushing DNS cache..." -ForegroundColor Gray
+try {
+    Clear-DnsClientCache -ErrorAction Stop
+    ipconfig /flushdns | Out-Null
+    Write-Host "  DNS cache cleared successfully" -ForegroundColor Green
+} catch {
+    Write-Host "  WARNING: Could not flush DNS cache: $_" -ForegroundColor Yellow
+}
+
 # ==================== Success ====================
 
 Write-Host ""
