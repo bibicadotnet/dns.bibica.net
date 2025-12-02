@@ -20,7 +20,7 @@ Write-Host ""
 # ==================== Functions ====================
 
 function Stop-AllServices {
-    @("dnsproxy", "winws") | ForEach-Object {
+    @("dnsproxy", "winws", "goodbyedpi") | ForEach-Object {
         Get-Process -Name $_ -ErrorAction SilentlyContinue | Stop-Process -Force
     }
     Get-WmiObject Win32_Process | Where-Object {
