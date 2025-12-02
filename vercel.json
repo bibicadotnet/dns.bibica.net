@@ -1,6 +1,6 @@
 {
   "version": 2,
   "routes": [
-      {"src": "/(.*)","dest": "https://iabucttpma.cloudflare-gateway.com"}
+      {"src": "/(.*)","dest": "https://8.8.8.8/dns-query"}
   ]
 }
