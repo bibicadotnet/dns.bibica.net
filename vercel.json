@@ -1,5 +1,6 @@
 {
-  "rewrites": [
-    { "source": "/(.*)", "destination": "/api/dns" }
+  "version": 2,
+  "routes": [
+      {"src": "/(.*)","dest": "https://bu0eg1tdzu.cloudflare-gateway.com/dns-query"}
   ]
 }
