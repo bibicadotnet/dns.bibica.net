@@ -1,96 +1,60 @@
-// api/dns.js – DoH Proxy cho Google Public DNS (binary + JSON)
-const DOH_BINARY = 'https://dns.google/dns-query';  // Binary DoH (RFC 8484)
-const DOH_JSON = 'https://dns.google/resolve';      // JSON API
-const TYPE_DNS = 'application/dns-message';
-const TYPE_JSON = 'application/dns-json';
+// api/dns.js – Google DoH Proxy + ECS 100% đúng
+const UPSTREAM = "https://dns.google/dns-query";
 
 export default async function handler(req, res) {
-  const { method, headers, url: rawUrl } = req;
-  const requestUrl = new URL(rawUrl, `http://${headers.host}`);
-  const searchParams = requestUrl.searchParams;
+  const { method, headers, url } = req;
+
+  // ==== LẤY IP THẬT CỦA USER (Vercel luôn có 1 trong 2 header này) ====
+  const realIp =
+    headers["x-forwarded-for"]?.split(",")[0].trim() ||
+    headers["x-real-ip"] ||
+    "1.1.1.1";
+
+  // ==== Tạo headers mới – chỉ giữ những gì Google cần ====
+  const forwardHeaders = {
+    "accept": headers["accept"] || "application/dns-message",
+    "content-type": headers["content-type"] || "",
+    "user-agent": headers["user-agent"] || "",
+    "accept-encoding": headers["accept-encoding"] || "",
+    // ←←← 2 header QUAN TRỌNG NHẤT Google dùng để tính ECS
+    "x-forwarded-for": realIp,
+    "cf-connecting-ip": realIp,
+  };
+
+  // Xóa rác
+  delete forwardHeaders.host;
+  delete forwardHeaders.connection;
+
+  const targetUrl = method === "POST" ? UPSTREAM : UPSTREAM + new URL(url, "http://localhost").search;
 
   try {
-    // Lấy IP thật của user cho ECS
-    const realIp = headers['x-forwarded-for']?.split(',')[0]?.trim() ||
-                   headers['cf-connecting-ip'] ||
-                   headers['x-real-ip'] ||
-                   '14.191.231.0';
-
-    const newHeaders = {};
-    Object.entries(headers).forEach(([key, value]) => {
-      const lowerKey = key.toLowerCase();
-      if (!lowerKey.startsWith('x-') && lowerKey !== 'host' && lowerKey !== 'connection') {
-        newHeaders[key] = value;
-      }
-    });
-    newHeaders['X-Forwarded-For'] = realIp;
-    newHeaders['CF-Connecting-IP'] = realIp;
-    newHeaders['True-Client-IP'] = realIp;  // Google đọc thêm
-
-    let targetUrl, body, upstreamHeaders;
-
-    if (method === 'GET') {
-      if (searchParams.has('dns')) {
-        targetUrl = `${DOH_BINARY}?dns=${searchParams.get('dns')}`;
-        upstreamHeaders = { ...newHeaders, Accept: TYPE_DNS };
-      }
-      else if (headers.accept?.includes(TYPE_JSON)) {
-        let jsonPath = requestUrl.search;
-        if (!searchParams.has('name')) {
-          return res.status(400).json({ error: 'name parameter required for JSON mode' });
-        }
-        targetUrl = `${DOH_JSON}${jsonPath}`;
-        upstreamHeaders = { ...newHeaders, Accept: TYPE_JSON };
-      } else {
-        return res.status(404).send('');
-      }
-      body = undefined;
-    } else if (method === 'POST') {
-      // Mode 3: POST binary
-      if (headers['content-type'] !== TYPE_DNS) {
-        return res.status(404).send('');
-      }
-      targetUrl = DOH_BINARY;
-      body = await getRawBody(req);
-      upstreamHeaders = { ...newHeaders, 'Content-Type': TYPE_DNS, Accept: TYPE_DNS };
-    } else {
-      return res.status(405).send('Method Not Allowed');
-    }
-
-    const response = await fetch(targetUrl, {
+    const upstreamResponse = await fetch(targetUrl, {
       method,
-      headers: upstreamHeaders,
-      body,
-      signal: AbortSignal.timeout(5000),
+      headers: forwardHeaders,
+      body: method === "POST" ? req : null, // Vercel Serverless cho forward stream khi bodyParser: false
+      redirect: "follow",
     });
 
-    res.status(response.status);
-    response.headers.forEach((value, key) => {
+    // Copy hết headers từ Google về
+    upstreamResponse.headers.forEach((value, key) => {
       res.setHeader(key, value);
     });
 
-    // Stream body (binary hoặc JSON)
-    const data = await response.arrayBuffer();
-    res.setHeader('Content-Length', data.byteLength);
-    res.end(Buffer.from(data));
+    res.status(upstreamResponse.status);
 
-  } catch (error) {
-    console.error('DoH Proxy Error:', error);
-    res.status(500).json({ error: 'Internal Server Error' });
+    // Trả binary hoặc JSON nguyên vẹn
+    const buffer = Buffer.from(await upstreamResponse.arrayBuffer());
+    res.setHeader("content-length", buffer.length);
+    res.end(buffer);
+  } catch (e) {
+    console.error(e);
+    res.status(502).end("Bad Gateway");
   }
 }
 
-// Raw body cho POST binary (fix crash)
-async function getRawBody(req) {
-  const chunks = [];
-  for await (const chunk of req) {
-    chunks.push(Buffer.from(chunk));
-  }
-  return Buffer.concat(chunks);
-}
-
+// BẮT BUỘC – tắt body parser để POST binary không bị parse lỗi
 export const config = {
   api: {
-    bodyParser: false,  // Bắt buộc: Tắt parser cho binary
+    bodyParser: false,
   },
 };
