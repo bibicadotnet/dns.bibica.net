@@ -1,6 +1,43 @@
 {
   "version": 2,
   "routes": [
-      {"src": "/(.*)","dest": "https://bu0eg1tdzu.cloudflare-gateway.com/dns-query"}
+    {
+      "src": "/(.*)",
+      "has": [
+        {
+          "type": "query",
+          "key": "dns"
+        }
+      ],
+      "dest": "https://8.8.8.8/dns-query"
+    },
+    {
+      "src": "/(.*)",
+      "methods": ["GET"],
+      "has": [
+        {
+          "type": "header",
+          "key": "Accept",
+          "value": "application/dns-json"
+        }
+      ],
+      "dest": "https://8.8.8.8/dns-query"
+    },
+    {
+      "src": "/(.*)",
+      "methods": ["POST"],
+      "has": [
+        {
+          "type": "header",
+          "key": "Content-Type",
+          "value": "application/dns-message"
+        }
+      ],
+      "dest": "https://8.8.8.8/dns-query"
+    },
+    {
+      "src": "/(.*)",
+      "status": 404
+    }
   ]
 }
