@@ -14,7 +14,7 @@ export default async function handler(req, res) {
     const realIp = headers['x-forwarded-for']?.split(',')[0]?.trim() ||
                    headers['cf-connecting-ip'] ||
                    headers['x-real-ip'] ||
-                   '0.0.0.0';
+                   '14.191.231.0';
 
     const newHeaders = {};
     Object.entries(headers).forEach(([key, value]) => {
