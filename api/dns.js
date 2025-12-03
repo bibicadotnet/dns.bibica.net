@@ -1,50 +1,50 @@
-// api/dns.js – Google DoH Proxy + ECS 100% đúng
+// api/dns.js – Google DoH Proxy + ECS CHUẨN VIỆT NAM
 const UPSTREAM = "https://dns.google/dns-query";
 
 export default async function handler(req, res) {
   const { method, headers, url } = req;
 
-  // ==== LẤY IP THẬT CỦA USER (Vercel luôn có 1 trong 2 header này) ====
-  const realIp =
-    headers["x-forwarded-for"]?.split(",")[0].trim() ||
+  // 1. Lấy IP thật của người dùng (Vercel luôn có 1 trong 2)
+  const realIp = (
+    headers["x-forwarded-for"]?.split(",")[0]?.trim() ||
     headers["x-real-ip"] ||
-    "1.1.1.1";
+    "127.0.0.1"
+  );
 
-  // ==== Tạo headers mới – chỉ giữ những gì Google cần ====
+  // 2. Tạo subnet /24 (Google chỉ chấp nhận /24 trở lên cho IPv4)
+  const subnet = realIp.split(".").slice(0, 3).join(".") + ".0/24";
+
+  // 3. Headers Google tin tưởng 100% để tính ECS
   const forwardHeaders = {
-    "accept": headers["accept"] || "application/dns-message",
-    "content-type": headers["content-type"] || "",
-    "user-agent": headers["user-agent"] || "",
-    "accept-encoding": headers["accept-encoding"] || "",
-    // ←←← 2 header QUAN TRỌNG NHẤT Google dùng để tính ECS
-    "x-forwarded-for": realIp,
-    "cf-connecting-ip": realIp,
+    Accept: headers["accept"] || "application/dns-message",
+    "Content-Type": headers["content-type"] || "",
+    "User-Agent": headers["user-agent"] || "DoH-Proxy",
+    "Accept-Encoding": headers["accept-encoding"] || "identity",
+
+    // ←←← 3 header BẮT BUỘC để Google dùng ECS của bạn thay vì IP Vercel
+    "X-Forwarded-For": realIp,
+    "CF-Connecting-IP": realIp,
+    "Edns-Client-Subnet": subnet,           // Header QUAN TRỌNG NHẤT!
   };
 
-  // Xóa rác
-  delete forwardHeaders.host;
-  delete forwardHeaders.connection;
-
-  const targetUrl = method === "POST" ? UPSTREAM : UPSTREAM + new URL(url, "http://localhost").search;
+  const targetUrl = method === "POST" 
+    ? UPSTREAM 
+    : UPSTREAM + new URL(url, "http://localhost").search;
 
   try {
-    const upstreamResponse = await fetch(targetUrl, {
+    const resp = await fetch(targetUrl, {
       method,
       headers: forwardHeaders,
-      body: method === "POST" ? req : null, // Vercel Serverless cho forward stream khi bodyParser: false
+      body: method === "POST" ? req : null,
       redirect: "follow",
     });
 
-    // Copy hết headers từ Google về
-    upstreamResponse.headers.forEach((value, key) => {
-      res.setHeader(key, value);
-    });
+    // Copy toàn bộ header từ Google
+    resp.headers.forEach((v, k) => res.setHeader(k, v));
+    res.status(resp.status);
 
-    res.status(upstreamResponse.status);
-
-    // Trả binary hoặc JSON nguyên vẹn
-    const buffer = Buffer.from(await upstreamResponse.arrayBuffer());
-    res.setHeader("content-length", buffer.length);
+    const buffer = Buffer.from(await resp.arrayBuffer());
+    res.setHeader("Content-Length", buffer.length);
     res.end(buffer);
   } catch (e) {
     console.error(e);
@@ -52,9 +52,8 @@ export default async function handler(req, res) {
   }
 }
 
-// BẮT BUỘC – tắt body parser để POST binary không bị parse lỗi
 export const config = {
   api: {
-    bodyParser: false,
+    bodyParser: false,   // bắt buộc cho POST binary
   },
 };
