@@ -1,38 +1,32 @@
 // api/dns.js
 const UPSTREAM = "https://8.8.8.8/dns-query";
 
-export default async function handler(req, res) {
-  const { method, headers, url } = req;
+export const config = {
+  runtime: "edge",
+};
 
-  // Lấy IP thật của user (Vercel headers)
-  const realIp = headers["x-forwarded-for"]?.split(",")[0] ||
-                 headers["x-real-ip"] ||
-                 req.socket.remoteAddress;
+export default async function handler(request) {
+  const url = new URL(request.url);
+  const realIp = request.headers.get("x-forwarded-for")?.split(",")[0]?.trim()
+                 || request.headers.get("cf-connecting-ip")
+                 || "1.1.1.1";
 
-  const newHeaders = new Headers();
-  for (const [k, v] of Object.entries(headers)) {
-    if (!k.startsWith("x-") && k !== "host" && k !== "connection") {
-      newHeaders.set(k, v);
-    }
-  }
+  const headers = new Headers(request.headers);
+  headers.set("X-Forwarded-For", realIp);
+  headers.set("CF-Connecting-IP", realIp);
+  headers.delete("host");
 
-  newHeaders.set("X-Forwarded-For", realIp);
-  newHeaders.set("CF-Connecting-IP", realIp);
+  const targetUrl = request.method === "POST" ? UPSTREAM : UPSTREAM + url.search;
 
-  const upstreamUrl = UPSTREAM + new URL(url).search;
-
-  const response = await fetch(method === "POST" ? UPSTREAM : upstreamUrl, {
-    method,
-    headers: newHeaders,
-    body: method === "POST" ? req : undefined,
+  const response = await fetch(targetUrl, {
+    method: request.method,
+    headers,
+    body: request.body,
     redirect: "follow",
   });
 
-  res.status(response.status);
-  for (const [k, v] of response.headers) res.setHeader(k, v);
-  return response.body ? res.send(await response.arrayBuffer()) : res.end();
+  return new Response(response.body, {
+    status: response.status,
+    headers: response.headers,
+  });
 }
-
-export const config = {
-  api: { bodyParser: false },
-};
