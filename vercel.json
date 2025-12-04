@@ -1,6 +1,6 @@
 {
   "version": 2,
   "routes": [
-      {"src": "/(.*)","dest": "https://9.9.9.11/dns-query"}
+      {"src": "/(.*)","dest": "https://doh.opendns.com/dns-query"}
   ]
 }
