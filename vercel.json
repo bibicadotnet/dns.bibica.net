@@ -1,6 +1,6 @@
 {
   "version": 2,
   "routes": [
-      {"src": "/(.*)","dest": "https://8.8.8.8/dns-query"}
+      {"src": "/(.*)","dest": "https://9.9.9.11/dns-query"}
   ]
 }
