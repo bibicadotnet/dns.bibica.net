@@ -1,6 +1,6 @@
 {
   "version": 2,
   "routes": [
-      {"src": "/(.*)","dest": "https://wikimedia-dns.org/dns-query"}
+      {"src": "/(.*)","dest": "https://rx.techomespace.com/dns-query"}
   ]
 }
