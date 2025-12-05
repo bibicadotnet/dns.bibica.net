@@ -323,6 +323,7 @@ bbc.co.uk
 www.xvideos.com
 xvideos.com
 nyaa.si
+lrepacks.net
 "@ | Out-File "$zapretPath\blacklist.txt" -Encoding UTF8
 
 # VBS startup launcher
