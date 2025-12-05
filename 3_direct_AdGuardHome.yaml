@@ -27,14 +27,77 @@ dns:
     - https://bu0eg1tdzu.cloudflare-gateway.com/dns-query
     - '# Tài khoản doh-bibica-net'
     - https://97nsi83nhg.cloudflare-gateway.com/dns-query
-    - '[/nikke-en.com/]https://64mieu1dce.cloudflare-gateway.com/dns-query'
+    - '# Github'
+    - '[/nikke-en.com/]https://dns.mullvad.net/dns-query'
+    - '[/github.io/]https://dns.mullvad.net/dns-query'
+    - '[/github.com/]https://dns.mullvad.net/dns-query'
+    - '[/githubcopilot.com/]https://dns.mullvad.net/dns-query'
+    - '[/githubusercontent.com/]https://dns.mullvad.net/dns-query'
+    - '[/github-cloud.s3.amazonaws.com/]https://dns.mullvad.net/dns-query'
+    - '[/githubassets.com/]https://dns.mullvad.net/dns-query'
+    - '# Vercel Việt Nam'
+    - '[/ibytedtos.com/]https://vn.dns.bibica.net'
+    - '[/tiktokcdn.com/]https://vn.dns.bibica.net'
+    - '[/tiktokcdn-eu.com/]https://vn.dns.bibica.net'
+    - '[/tiktok.com/]https://vn.dns.bibica.net'
+    - '[/tiktokv.com/]https://vn.dns.bibica.net'
+    - '[/ttwstatic.com/]https://vn.dns.bibica.net'
+    - '[/bilibili.com/]https://vn.dns.bibica.net'
+    - '[/hdslb.com/]https://vn.dns.bibica.net'
+    - '[/biliimg.com/]https://vn.dns.bibica.net'
+    - '[/bilivideo.com/]https://vn.dns.bibica.net'
+    - '[/biligame.com/]https://vn.dns.bibica.net'
+    - '[/akamai.net/]https://vn.dns.bibica.net'
+    - '[/akamaized.net/]https://vn.dns.bibica.net'
+    - '[/akamaitechnologies.com/]https://vn.dns.bibica.net'
+    - '[/akamaihd.net/]https://vn.dns.bibica.net'
+    - '[/akadns.net/]https://vn.dns.bibica.net'
+    - '[/akstat.io/]https://vn.dns.bibica.net'
+    - '[/edgekey.net/]https://vn.dns.bibica.net'
+    - '[/edgesuite.net/]https://vn.dns.bibica.net'
+    - '[/cdn20.com/]https://vn.dns.bibica.net'
+    - '[/byteoversea.com/]https://vn.dns.bibica.net'
+    - '[/slatic.net/]https://vn.dns.bibica.net'
+    - '[/alicdn.com/]https://vn.dns.bibica.net'
+    - '[/susercontent.com/]https://vn.dns.bibica.net'
+    - '[/shopee.com/]https://vn.dns.bibica.net'
+    - '[/ttdns2.com/]https://vn.dns.bibica.net'
+    - '[/apple.com/]https://vn.dns.bibica.net'
+    - '# Vercel Việt Nam 01'
+    - '[/ibytedtos.com/]https://vn01.dns.bibica.net'
+    - '[/tiktokcdn.com/]https://vn01.dns.bibica.net'
+    - '[/tiktokcdn-eu.com/]https://vn01.dns.bibica.net'
+    - '[/tiktok.com/]https://vn01.dns.bibica.net'
+    - '[/tiktokv.com/]https://vn01.dns.bibica.net'
+    - '[/ttwstatic.com/]https://vn01.dns.bibica.net'
+    - '[/bilibili.com/]https://vn01.dns.bibica.net'
+    - '[/hdslb.com/]https://vn01.dns.bibica.net'
+    - '[/biliimg.com/]https://vn01.dns.bibica.net'
+    - '[/bilivideo.com/]https://vn01.dns.bibica.net'
+    - '[/biligame.com/]https://vn01.dns.bibica.net'
+    - '[/akamai.net/]https://vn01.dns.bibica.net'
+    - '[/akamaized.net/]https://vn01.dns.bibica.net'
+    - '[/akamaitechnologies.com/]https://vn01.dns.bibica.net'
+    - '[/akamaihd.net/]https://vn01.dns.bibica.net'
+    - '[/akadns.net/]https://vn01.dns.bibica.net'
+    - '[/akstat.io/]https://vn01.dns.bibica.net'
+    - '[/edgekey.net/]https://vn01.dns.bibica.net'
+    - '[/edgesuite.net/]https://vn01.dns.bibica.net'
+    - '[/cdn20.com/]https://vn01.dns.bibica.net'
+    - '[/byteoversea.com/]https://vn01.dns.bibica.net'
+    - '[/slatic.net/]https://vn01.dns.bibica.net'
+    - '[/alicdn.com/]https://vn01.dns.bibica.net'
+    - '[/susercontent.com/]https://vn01.dns.bibica.net'
+    - '[/shopee.com/]https://vn01.dns.bibica.net'
+    - '[/ttdns2.com/]https://vn01.dns.bibica.net'
+    - '[/apple.com/]https://vn01.dns.bibica.net'
   upstream_dns_file: ""
   bootstrap_dns:
     - 8.8.8.8
     - 1.1.1.1
   fallback_dns:
     - https://iabucttpma.cloudflare-gateway.com/dns-query
-  upstream_mode: parallel
+  upstream_mode: load_balance
   fastest_timeout: 1s
   allowed_clients: []
   disallowed_clients: []
@@ -94,12 +157,12 @@ querylog:
   ignored: []
   interval: 24h
   size_memory: 1000
-  enabled: false
+  enabled: true
   file_enabled: false
 statistics:
   dir_path: ""
   ignored: []
-  interval: 24h
+  interval: 720h
   enabled: true
 filters:
   - enabled: true
@@ -182,9 +245,6 @@ filtering:
       enabled: true
     - domain: v19-webapp-prime.tiktok.com
       answer: v16-webapp-prime.tiktok.com
-      enabled: true
-    - domain: upos-sz-staticcos-cmask.bilivideo.com
-      answer: upos-sz-mirrorcosov.bilivideo.com
       enabled: true
     - domain: medium.com
       answer: rocket.net
