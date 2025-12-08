@@ -308,8 +308,7 @@ dns:
     - 1.1.1.1
     - 9.9.9.9
   fallback_dns:
-    - https://8.8.8.8/dns-query
-    - https://8.8.4.4/dns-query
+    - https://iabucttpma.cloudflare-gateway.com/dns-query
   upstream_mode: load_balance
   fastest_timeout: 1s
   allowed_clients: []
