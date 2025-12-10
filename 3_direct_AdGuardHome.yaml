@@ -160,8 +160,8 @@ dns:
     - ::1/128
   cache_enabled: false
   cache_size: 536870912
-  cache_ttl_min: 1
-  cache_ttl_max: 1
+  cache_ttl_min: 0
+  cache_ttl_max: 0
   cache_optimistic: false
   cache_optimistic_answer_ttl: 30s
   cache_optimistic_max_age: 12h
@@ -207,14 +207,14 @@ tls:
 querylog:
   dir_path: ""
   ignored: []
-  interval: 2160h
+  interval: 24h
   size_memory: 1000
-  enabled: true
+  enabled: false
   file_enabled: false
 statistics:
   dir_path: ""
   ignored: []
-  interval: 720h
+  interval: 24h
   enabled: true
 filters:
   - enabled: true
