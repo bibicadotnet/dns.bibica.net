@@ -509,7 +509,6 @@ foreach ($adapter in $adapters) {
     $ifIndex = $adapter.ifIndex
     
     try {
-        # Set IPv4 DNS to 127.0.0.1
         Set-DnsClientServerAddress -InterfaceIndex $ifIndex -ServerAddresses "127.0.0.1" -ErrorAction Stop
         netsh interface ipv6 delete dnsserver name="$adapterName" all 2>$null | Out-Null
         netsh interface ipv6 delete dnsserver interface=$ifIndex all 2>$null | Out-Null
@@ -526,6 +525,46 @@ try {
     ipconfig /flushdns | Out-Null
 } catch {
     Write-Host "  WARNING: Could not flush DNS cache: $_" -ForegroundColor Yellow
+}
+
+# ==================== Verify Performance ====================
+
+Write-Host "Verifying Akamai CDN Vietnam Optimization..." -ForegroundColor Gray
+$targets = @(
+    @{ Name = "Tiktok";   Domain = "v16-webapp-prime.tiktok.com" }
+    @{ Name = "Bilibili"; Domain = "upos-hz-mirrorakam.akamaized.net" }
+    @{ Name = "Apple";    Domain = "www.apple.com" }
+    @{ Name = "Douyin";   Domain = "v3-dy-o.zjcdn.com" }
+)
+
+foreach ($t in $targets) {
+    # Set a fixed padding length (e.g., 10 characters) based on the longest name ("Bilibili" is 8)
+    $pName = $t.Name.PadRight(10) 
+    
+    try {
+        # Ping the domain name. Test-Connection uses system DNS (127.0.0.1).
+        $ping = Test-Connection -ComputerName $t.Domain -Count 1 -ErrorAction Stop
+        $ms = $ping.ResponseTime
+        
+        # Latency string format (e.g., " (7ms) ")
+        $statusText = "($($ms)ms)"
+        
+        # Determine status and color
+        if ($ms -lt 10) {
+            $status = "[Optimized]"
+            $color = "Green"
+        } else {
+            $status = "[Normal]"
+            $color = "Yellow" 
+        }
+
+        # Print result: Target Name (padded) | Latency | Status
+        Write-Host "  $pName $statusText $status" -ForegroundColor $color
+
+    } catch {
+        # Catch DNS resolution failure or ping timeout
+        Write-Host "  $pName Error" -ForegroundColor Red
+    }
 }
 
 # ==================== Success ====================
