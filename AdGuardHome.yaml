@@ -23,9 +23,11 @@ dns:
   ratelimit_whitelist: []
   refuse_any: true
   upstream_dns:
-    - https://8.8.4.4/dns-query
-    - https://149.112.112.11/dns-query
+    - https://bu0eg1tdzu.cloudflare-gateway.com/dns-query
+    - https://97nsi83nhg.cloudflare-gateway.com/dns-query
+    - '# Github (Mullvad)'
     - '[/nikke-en.com/]https://dns.mullvad.net/dns-query'
+    - '[/github.io/]https://dns.mullvad.net/dns-query'
     - '[/github.com/]https://dns.mullvad.net/dns-query'
     - '[/githubcopilot.com/]https://dns.mullvad.net/dns-query'
     - '[/githubusercontent.com/]https://dns.mullvad.net/dns-query'
@@ -33,10 +35,11 @@ dns:
     - '[/githubassets.com/]https://dns.mullvad.net/dns-query'
   upstream_dns_file: ""
   bootstrap_dns:
-    - 149.112.112.11
     - 8.8.8.8
+    - 1.1.1.1
+    - 9.9.9.9
   fallback_dns:
-    - https://1.1.1.1/dns-query
+    - https://iabucttpma.cloudflare-gateway.com/dns-query
   upstream_mode: parallel
   fastest_timeout: 1s
   allowed_clients: []
@@ -48,17 +51,18 @@ dns:
   trusted_proxies:
     - 127.0.0.0/8
     - ::1/128
-    - 172.16.0.0/12
-  cache_enabled: true
-  cache_size: 134217728
-  cache_ttl_min: 0
-  cache_ttl_max: 0
-  cache_optimistic: true
+  cache_enabled: false
+  cache_size: 536870912
+  cache_ttl_min: 1
+  cache_ttl_max: 1
+  cache_optimistic: false
+  cache_optimistic_answer_ttl: 30s
+  cache_optimistic_max_age: 12h
   bogus_nxdomain: []
   aaaa_disabled: true
   enable_dnssec: false
   edns_client_subnet:
-    custom_ip: 
+    custom_ip: 1.1.1.1
     enabled: true
     use_custom: false
   max_goroutines: 300
@@ -104,7 +108,7 @@ statistics:
   dir_path: ""
   ignored: []
   interval: 24h
-  enabled: false
+  enabled: true
 filters:
   - enabled: true
     url: https://adguardteam.github.io/HostlistsRegistry/assets/filter_16.txt
@@ -118,6 +122,14 @@ filters:
     url: https://raw.githubusercontent.com/bibicadotnet/AdGuard-Home-blocklists/refs/heads/main/byme.txt
     name: CocCoc & MSN Domains
     id: 1760504974
+  - enabled: true
+    url: https://raw.githubusercontent.com/VeleSila/yhosts/master/hosts
+    name: China
+    id: 1763371876
+  - enabled: true
+    url: https://badmojr.github.io/1Hosts/Lite/adblock.txt
+    name: 1Hosts (Lite)
+    id: 1763371877
 whitelist_filters:
   - enabled: true
     url: https://raw.githubusercontent.com/bibicadotnet/AdGuard-Home-blocklists/refs/heads/main/whitelist.txt
@@ -147,7 +159,7 @@ filtering:
   blocking_ipv6: ""
   blocked_services:
     schedule:
-      time_zone: UTC
+      time_zone: Local
     ids: []
   protection_disabled_until: null
   safe_search:
@@ -163,14 +175,35 @@ filtering:
   parental_block_host: family-block.dns.adguard.com
   safebrowsing_block_host: standard-block.dns.adguard.com
   rewrites:
+    - domain: imgur.com
+      answer: imgur.map.fastly.net
+      enabled: true
+    - domain: pornhub.com
+      answer: www.pornhub.com
+      enabled: true
+    - domain: redd.it
+      answer: reddit.map.fastly.net
+      enabled: true
+    - domain: www.reddit.com
+      answer: reddit.map.fastly.net
+      enabled: true
+    - domain: v19-webapp-prime.tiktok.com
+      answer: v16-webapp-prime.tiktok.com
+      enabled: true
     - domain: medium.com
-      answer: bibica.net
-    - domain: '*.medium.com'
-      answer: bibica.net
-    - domain: admin.dns.bibica.net
-      answer: 3.1.4.246
+      answer: rocket.net
+      enabled: true
+    - domain: www.medium.com
+      answer: rocket.net
+      enabled: true
+    - domain: ww.bilibili.tv
+      answer: www.bilibili.tv.edgesuite.net
+      enabled: true
+    - domain: bilibili.tv
+      answer: ww.bilibili.tv
+      enabled: true
   safe_fs_patterns:
-    - /opt/adguardhome/work/userfilters/*
+    - /home/AdGuardHome/userfilters/*
   safebrowsing_cache_size: 1048576
   safesearch_cache_size: 1048576
   parental_cache_size: 1048576
@@ -178,6 +211,7 @@ filtering:
   filters_update_interval: 24
   blocked_response_ttl: 10
   filtering_enabled: true
+  rewrites_enabled: true
   parental_enabled: false
   safebrowsing_enabled: false
   protection_enabled: true
@@ -197,9 +231,9 @@ log:
   max_age: 0
   compress: false
   local_time: false
-  verbose: false
+  verbose: true
 os:
   group: ""
   user: ""
   rlimit_nofile: 0
-schema_version: 30
+schema_version: 32
