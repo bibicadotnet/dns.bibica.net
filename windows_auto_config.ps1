@@ -343,7 +343,7 @@ On Error GoTo 0
 WScript.Sleep 1000
 
 ws.CurrentDirectory = "$zapretPath"
-ws.Run "winws.exe --wf-tcp=80,443 --wf-udp=443 --hostlist=blacklist.txt --dpi-desync=fake,disorder2 --dpi-desync-fooling=md5sig,badseq --dpi-desync-repeats=6", 0, False
+ws.Run "winws.exe --wf-tcp=80,443 --wf-udp=443 --hostlist=blacklist.txt --dpi-desync=fake,disorder --dpi-desync-fooling=md5sig,badseq --dpi-desync-repeats=3", 0, False
 
 WScript.Sleep 2000
 
