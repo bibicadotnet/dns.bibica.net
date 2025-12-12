@@ -461,13 +461,24 @@ Write-Host "Starting services..." -ForegroundColor Gray
 Start-Process "wscript.exe" -ArgumentList "`"$installPath\dns-bibica-net-startup.vbs`"" -WindowStyle Hidden
 
 # ==================== Verify Services ====================
-
 Write-Host "Verifying services..." -ForegroundColor Gray
-if (-not (Wait-ProcessStarted -ProcessNames @("dnsproxy", "winws") -TimeoutSeconds 5)) {
+
+$serviceStarted = Wait-ProcessStarted -ProcessNames @("dnsproxy", "winws") -TimeoutSeconds 5
+
+if (-not $serviceStarted) {
+    Start-Sleep -Seconds 2
+    $serviceStarted = Wait-ProcessStarted -ProcessNames @("dnsproxy", "winws") -TimeoutSeconds 5
+    
+    if (-not $serviceStarted) {
+        Start-Sleep -Seconds 2
+        $serviceStarted = Wait-ProcessStarted -ProcessNames @("dnsproxy", "winws") -TimeoutSeconds 5
+    }
+}
+
+if (-not $serviceStarted) {
     Write-Host ""
     Write-Host "ERROR: Services failed to start" -ForegroundColor Red
     Write-Host "Restoring DNS settings..." -ForegroundColor Yellow
-
     if (Restore-DNSFromBackup -BackupFilePath $backupFile) {
         Write-Host "DNS restored successfully" -ForegroundColor Green
     } else {
