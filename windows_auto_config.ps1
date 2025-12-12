@@ -314,8 +314,6 @@ medium.com
 steamcommunity.com
 bilibili.tv
 www.bilibili.tv
-www.bilibili.tv.edgesuite.net
-a1346.v.akamai.net
 www.bbc.com
 bbc.com
 www.bbc.co.uk
