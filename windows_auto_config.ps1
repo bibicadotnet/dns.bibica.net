@@ -14,6 +14,7 @@ $backupFile = "$installPath\dns-backup.txt"
 $startupPath = "$env:APPDATA\Microsoft\Windows\Start Menu\Programs\Startup"
 $startupShortcut = "$startupPath\dns-bibica-net.lnk"
 
+Write-Host ""
 Write-Host "dns.bibica.net DoH & DPI bypass - Auto Installer" -ForegroundColor Cyan
 Write-Host ""
 
@@ -549,17 +550,19 @@ try {
 
 # ==================== Verify Performance ====================
 
-Write-Host "Verifying Akamai CDN Vietnam Optimization..." -ForegroundColor Gray
+Write-Host "Verifying CDN Vietnam Optimization..." -ForegroundColor Gray
+Write-Host ""
 $targets = @(
-    @{ Name = "Tiktok";   Domain = "v16-webapp-prime.tiktok.com" }
-    @{ Name = "Bilibili"; Domain = "upos-hz-mirrorakam.akamaized.net" }
-    @{ Name = "Apple";    Domain = "www.apple.com" }
-    @{ Name = "Douyin";   Domain = "v3-dy-o.zjcdn.com" }
+    @{ Name = "Tiktok.com";   Domain = "v16-webapp-prime.tiktok.com" }
+    @{ Name = "Bilibili.com"; Domain = "upos-hz-mirrorakam.akamaized.net" }
+    @{ Name = "Apple.com";    Domain = "www.apple.com" }
+    @{ Name = "Douyin.com";   Domain = "v3-dy-o.zjcdn.com" }
+    @{ Name = "Bilibili.tv";  Domain = "www.bilibili.tv" }	
 )
 
 foreach ($t in $targets) {
     # Set a fixed padding length (e.g., 10 characters) based on the longest name ("Bilibili" is 8)
-    $pName = $t.Name.PadRight(10) 
+    $pName = $t.Name.PadRight(15) 
     
     try {
         # Ping the domain name. Test-Connection uses system DNS (127.0.0.1).
