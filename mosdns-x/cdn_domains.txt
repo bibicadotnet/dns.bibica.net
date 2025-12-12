@@ -10,11 +10,16 @@ akamaitechnologies.net
 akamaiedge.net.cn
 akamaistream.net.cn
 akamai.net
+akamai.com
+akam.net
 akamaized-staging.net
 akamaistream.net
 cloudflare.net
 cloudflare.com
 cloudflare-dns.com
+cdnhwcchh18.com
+slatic.net
+cdnhwcick110.com
 workers.dev
 fastly.net
 fastlylb.net
@@ -26,6 +31,7 @@ awsdns.org
 awsdns.co.uk
 amazonaws.com
 1e100.net
+byteoversea.com
 googleusercontent.com
 gcdn.co
 azureedge.net
@@ -40,6 +46,7 @@ aliyun.com
 aliyundun.com
 aliyundun.net
 alikunlun.com
+kunlunsl.com
 kunlunar.com
 kunlunca.com
 kunluncan.com
@@ -71,6 +78,7 @@ hwwsdns.cn
 cdnhwc2.com
 huaweicloudwaf.cn
 huaweicloudwaf.com
+huaweicloud-dns.org
 bytedns.net
 bytedns1.com
 bytedance.com
@@ -177,6 +185,7 @@ qss-lb.com
 didiyunapi.com
 didiyun.com
 mxhichina.com
+hichina.com
 akamaitechnologies.org
 akamaiehd.net
 cdn.cloudflare.net
