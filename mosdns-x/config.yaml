@@ -38,7 +38,6 @@ plugins:
         - addr: "https://doh.opendns.com/dns-query"
         - addr: "https://dns.mullvad.net/dns-query"
         - addr: "https://cloudflare-dns.com/dns-query"
-        - addr: "https://dns.quad9.net/dns-query"
 
   # Pipeline xử lý chính
   - tag: main
