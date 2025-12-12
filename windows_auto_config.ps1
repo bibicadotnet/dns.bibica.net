@@ -319,6 +319,7 @@ rsload.net
 vn.linkedin.com
 medium.com
 steamcommunity.com
+store.steampowered.com
 bilibili.tv
 www.bilibili.tv
 www.bbc.com
@@ -329,6 +330,23 @@ www.xvideos.com
 xvideos.com
 nyaa.si
 lrepacks.net
+voa.gov
+rfa.org
+amnesty.org
+pastebin.com
+paste.ee
+xnxx.com
+xhamster.com
+javhd.today
+javhd.com
+spankbang.com
+xvideos2.com
+xvideos3.com
+javmost.com
+beeg.com
+sextop1.net
+sextop1.sale
+youporn.com
 "@ | Out-File "$zapretPath\blacklist.txt" -Encoding UTF8
 
 # VBS startup launcher
