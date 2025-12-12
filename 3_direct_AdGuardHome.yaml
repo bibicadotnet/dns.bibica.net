@@ -23,8 +23,7 @@ dns:
   ratelimit_whitelist: []
   refuse_any: true
   upstream_dns:
-    - https://bu0eg1tdzu.cloudflare-gateway.com/dns-query
-    - https://97nsi83nhg.cloudflare-gateway.com/dns-query
+    - 127.0.0.1:5301
     - '# Github (Mullvad)'
     - '[/nikke-en.com/]https://dns.mullvad.net/dns-query'
     - '[/github.io/]https://dns.mullvad.net/dns-query'
@@ -33,113 +32,6 @@ dns:
     - '[/githubusercontent.com/]https://dns.mullvad.net/dns-query'
     - '[/github-cloud.s3.amazonaws.com/]https://dns.mullvad.net/dns-query'
     - '[/githubassets.com/]https://dns.mullvad.net/dns-query'
-    - '# Google Core & Regional'
-    - '[/google.com/]https://8.8.8.8/dns-query'
-    - '[/google.com/]https://8.8.4.4/dns-query'
-    - '[/google.com.vn/]https://8.8.8.8/dns-query'
-    - '[/google.com.vn/]https://8.8.4.4/dns-query'
-    - '[/google.net/]https://8.8.8.8/dns-query'
-    - '[/google.net/]https://8.8.4.4/dns-query'
-    - '[/google.org/]https://8.8.8.8/dns-query'
-    - '[/google.org/]https://8.8.4.4/dns-query'
-    - '[/g.co/]https://8.8.8.8/dns-query'
-    - '[/g.co/]https://8.8.4.4/dns-query'
-    - '[/abc.xyz/]https://8.8.8.8/dns-query'
-    - '[/abc.xyz/]https://8.8.4.4/dns-query'
-    - '# YouTube & Media'
-    - '[/youtube.com/]https://8.8.8.8/dns-query'
-    - '[/youtube.com/]https://8.8.4.4/dns-query'
-    - '[/youtu.be/]https://8.8.8.8/dns-query'
-    - '[/youtu.be/]https://8.8.4.4/dns-query'
-    - '[/googlevideo.com/]https://8.8.8.8/dns-query'
-    - '[/googlevideo.com/]https://8.8.4.4/dns-query'
-    - '[/ytimg.com/]https://8.8.8.8/dns-query'
-    - '[/ytimg.com/]https://8.8.4.4/dns-query'
-    - '[/ggpht.com/]https://8.8.8.8/dns-query'
-    - '[/ggpht.com/]https://8.8.4.4/dns-query'
-    - '# Infrastructure & Content Delivery'
-    - '[/gstatic.com/]https://8.8.8.8/dns-query'
-    - '[/gstatic.com/]https://8.8.4.4/dns-query'
-    - '[/googleusercontent.com/]https://8.8.8.8/dns-query'
-    - '[/googleusercontent.com/]https://8.8.4.4/dns-query'
-    - '[/googleapis.com/]https://8.8.8.8/dns-query'
-    - '[/googleapis.com/]https://8.8.4.4/dns-query'
-    - '[/googlehosted.com/]https://8.8.8.8/dns-query'
-    - '[/googlehosted.com/]https://8.8.4.4/dns-query'
-    - '[/1e100.net/]https://8.8.8.8/dns-query'
-    - '[/1e100.net/]https://8.8.4.4/dns-query'
-    - '[/gvt1.com/]https://8.8.8.8/dns-query'
-    - '[/gvt1.com/]https://8.8.4.4/dns-query'
-    - '[/gvt2.com/]https://8.8.8.8/dns-query'
-    - '[/gvt2.com/]https://8.8.4.4/dns-query'
-    - '[/gvt3.com/]https://8.8.8.8/dns-query'
-    - '[/gvt3.com/]https://8.8.4.4/dns-query'
-    - '[/app-measurement.com/]https://8.8.8.8/dns-query'
-    - '[/app-measurement.com/]https://8.8.4.4/dns-query'
-    - '# Android & Apps'
-    - '[/android.com/]https://8.8.8.8/dns-query'
-    - '[/android.com/]https://8.8.4.4/dns-query'
-    - '[/firebaseio.com/]https://8.8.8.8/dns-query'
-    - '[/firebaseio.com/]https://8.8.4.4/dns-query'
-    - '[/crashlytics.com/]https://8.8.8.8/dns-query'
-    - '[/crashlytics.com/]https://8.8.4.4/dns-query'
-    - '[/chrome.com/]https://8.8.8.8/dns-query'
-    - '[/chrome.com/]https://8.8.4.4/dns-query'
-    - '[/chromium.org/]https://8.8.8.8/dns-query'
-    - '[/chromium.org/]https://8.8.4.4/dns-query'
-    - '# Ads, Analytics & Services'
-    - '[/google-analytics.com/]https://8.8.8.8/dns-query'
-    - '[/google-analytics.com/]https://8.8.4.4/dns-query'
-    - '[/googletagmanager.com/]https://8.8.8.8/dns-query'
-    - '[/googletagmanager.com/]https://8.8.4.4/dns-query'
-    - '[/googlesyndication.com/]https://8.8.8.8/dns-query'
-    - '[/googlesyndication.com/]https://8.8.4.4/dns-query'
-    - '[/googleadservices.com/]https://8.8.8.8/dns-query'
-    - '[/googleadservices.com/]https://8.8.4.4/dns-query'
-    - '[/doubleclick.net/]https://8.8.8.8/dns-query'
-    - '[/doubleclick.net/]https://8.8.4.4/dns-query'
-    - '[/recaptcha.net/]https://8.8.8.8/dns-query'
-    - '[/recaptcha.net/]https://8.8.4.4/dns-query'
-    - '[/gmail.com/]https://8.8.8.8/dns-query'
-    - '[/gmail.com/]https://8.8.4.4/dns-query'
-    - '# Blog & Other'
-    - '[/blogger.com/]https://8.8.8.8/dns-query'
-    - '[/blogger.com/]https://8.8.4.4/dns-query'
-    - '[/blogspot.com/]https://8.8.8.8/dns-query'
-    - '[/blogspot.com/]https://8.8.4.4/dns-query'
-    - '[/blogblog.com/]https://8.8.8.8/dns-query'
-    - '[/blogblog.com/]https://8.8.4.4/dns-query'
-    - '[/waze.com/]https://8.8.8.8/dns-query'
-    - '[/waze.com/]https://8.8.4.4/dns-query'
-    - '# Cloudflare Core & Infrastructure'
-    - '[/cloudflare.com/]https://1.1.1.1/dns-query'
-    - '[/cloudflare.com/]https://1.0.0.1/dns-query'
-    - '[/cloudflare.net/]https://1.1.1.1/dns-query'
-    - '[/cloudflare.net/]https://1.0.0.1/dns-query'
-    - '[/cloudflare-dns.com/]https://1.1.1.1/dns-query'
-    - '[/cloudflare-dns.com/]https://1.0.0.1/dns-query'
-    - '[/cloudflare-gateway.com/]https://1.1.1.1/dns-query'
-    - '[/cloudflare-gateway.com/]https://1.0.0.1/dns-query'
-    - '[/cloudflareinsights.com/]https://1.1.1.1/dns-query'
-    - '[/cloudflareinsights.com/]https://1.0.0.1/dns-query'
-    - '[/cloudflare-quic.com/]https://1.1.1.1/dns-query'
-    - '[/cloudflare-quic.com/]https://1.0.0.1/dns-query'
-    - '[/cloudflare-ech.com/]https://1.1.1.1/dns-query'
-    - '[/cloudflare-ech.com/]https://1.0.0.1/dns-query'
-    - '# Services (Workers, Pages, Tunnels)'
-    - '[/workers.dev/]https://1.1.1.1/dns-query'
-    - '[/workers.dev/]https://1.0.0.1/dns-query'
-    - '[/pages.dev/]https://1.1.1.1/dns-query'
-    - '[/pages.dev/]https://1.0.0.1/dns-query'
-    - '[/trycloudflare.com/]https://1.1.1.1/dns-query'
-    - '[/trycloudflare.com/]https://1.0.0.1/dns-query'
-    - '[/cloudflareclient.com/]https://1.1.1.1/dns-query'
-    - '[/cloudflareclient.com/]https://1.0.0.1/dns-query'
-    - '# Short Domains & WARP'
-    - '[/one.one/]https://1.1.1.1/dns-query'
-    - '[/one.one/]https://1.0.0.1/dns-query'
-    - '[/warp.plus/]https://1.1.1.1/dns-query'
-    - '[/warp.plus/]https://1.0.0.1/dns-query'
   upstream_dns_file: ""
   bootstrap_dns:
     - 8.8.8.8
@@ -147,7 +39,7 @@ dns:
     - 9.9.9.9
   fallback_dns:
     - https://iabucttpma.cloudflare-gateway.com/dns-query
-  upstream_mode: parallel
+  upstream_mode: load_balance
   fastest_timeout: 1s
   allowed_clients: []
   disallowed_clients: []
@@ -160,8 +52,8 @@ dns:
     - ::1/128
   cache_enabled: false
   cache_size: 536870912
-  cache_ttl_min: 0
-  cache_ttl_max: 0
+  cache_ttl_min: 1
+  cache_ttl_max: 1
   cache_optimistic: false
   cache_optimistic_answer_ttl: 30s
   cache_optimistic_max_age: 12h
@@ -209,7 +101,7 @@ querylog:
   ignored: []
   interval: 24h
   size_memory: 1000
-  enabled: false
+  enabled: true
   file_enabled: false
 statistics:
   dir_path: ""
@@ -302,6 +194,9 @@ filtering:
       enabled: true
     - domain: www.medium.com
       answer: rocket.net
+      enabled: true
+    - domain: www.bilibili.tv
+      answer: www.bilibili.tv.w.cdngslb.com
       enabled: true
   safe_fs_patterns:
     - /home/AdGuardHome/userfilters/*
