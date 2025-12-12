@@ -14,6 +14,7 @@ akamai.com
 akam.net
 akamaized-staging.net
 akamaistream.net
+aaplimg.com
 cloudflare.net
 cloudflare.com
 cloudflare-dns.com
@@ -30,6 +31,17 @@ awsdns.net
 awsdns.org
 awsdns.co.uk
 amazonaws.com
+azure-dns.com
+microsoft.com
+apple.com
+apple-dns.net
+cdn-apple.com
+adobe.net
+awsdns-12.co.uk
+awsdns-03.com
+tiktokcdn-eu.com
+ibyteimg.com
+omniture.com
 1e100.net
 byteoversea.com
 googleusercontent.com
@@ -41,6 +53,8 @@ azure.com
 office.com
 alicdn.com
 alibabadns.com
+amazon.com
+awsdns-31.com
 aliyuncs.com
 aliyun.com
 aliyundun.com
