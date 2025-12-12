@@ -15,9 +15,6 @@ akam.net
 akamaized-staging.net
 akamaistream.net
 aaplimg.com
-cloudflare.net
-cloudflare.com
-cloudflare-dns.com
 cdnhwcchh18.com
 slatic.net
 cdnhwcick110.com
@@ -99,6 +96,8 @@ bytedance.com
 bytefcdn-oversea.com
 bytedns3.com
 cdnbuild.net
+queniuyk.com
+queniudns.com
 baiduads.com
 bdydns.com
 jcloud-cdn.com
@@ -202,11 +201,6 @@ mxhichina.com
 hichina.com
 akamaitechnologies.org
 akamaiehd.net
-cdn.cloudflare.net
-cloudflarestream.com
-cf-ipfs.com
-cfargotunnel.com
-cloudflareworkers.com
 fastly.global.ssl.fastly.net
 fastlydns.net
 cloudfronts.net
