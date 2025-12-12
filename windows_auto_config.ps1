@@ -166,10 +166,16 @@ function Download-GitHubRelease {
 function Download-ZapretFiles {
     Write-Host "Downloading Zapret..." -ForegroundColor Gray
     
-    $baseUrl = "https://raw.githubusercontent.com/bol-van/zapret-win-bundle/master/zapret-winws"
-    $files = @("cygwin1.dll", "WinDivert.dll", "WinDivert64.sys", "winws.exe")
-    
     try {
+        # Get latest commit info for zapret-winws folder
+        $commitInfo = Invoke-RestMethod "https://api.github.com/repos/bol-van/zapret-win-bundle/commits?path=zapret-winws&per_page=1" -ErrorAction Stop
+        $commitDate = [DateTime]::Parse($commitInfo[0].commit.author.date).ToString("yyyy-MM-dd")
+        $commitHash = $commitInfo[0].sha.Substring(0, 7)
+        Write-Host "  Build: $commitDate ($commitHash)" -ForegroundColor DarkGray
+        
+        $baseUrl = "https://raw.githubusercontent.com/bol-van/zapret-win-bundle/master/zapret-winws"
+        $files = @("cygwin1.dll", "WinDivert.dll", "WinDivert64.sys", "winws.exe")
+        
         foreach ($file in $files) {
             $url = "$baseUrl/$file"
             $destPath = "$zapretPath\$file"
