@@ -1,0 +1,247 @@
+# Akamai
+akamaized.net
+edgesuite.net
+edgekey.net
+akamaiedge.net
+akamaihd.net
+akadns.net
+akasecure.net
+akamaitechnologies.com
+akamaitechnologies.net
+akamaiedge.net.cn
+akamaistream.net.cn
+
+# Cloudflare
+cloudflare.net
+cloudflare.com
+cloudflare-dns.com
+workers.dev
+
+# Fastly
+fastly.net
+fastlylb.net
+edgecompute.app
+
+# Amazon CloudFront & AWS
+cloudfront.net
+awsdns.com
+awsdns.net
+awsdns.org
+awsdns.co.uk
+amazonaws.com
+
+# Google Cloud CDN
+1e100.net
+googleusercontent.com
+gcdn.co
+
+# Microsoft Azure CDN
+azureedge.net
+azurefd.net
+trafficmanager.net
+
+# Alibaba Cloud CDN & WAF
+alicdn.com
+alibabadns.com
+aliyuncs.com
+aliyun.com
+aliyundun.com
+aliyundun.net
+alikunlun.com
+kunlunar.com
+kunlunca.com
+kunluncan.com
+kunlungr.com
+kunlunle.com
+kunlunpi.com
+cdngslb.com
+alicontainer.com
+aligaofang.com
+aliyundunwaf.com
+aliyunwaf.com
+aliyunddos0012.com
+queniusy.com
+alidns.com
+
+#Bili
+bilicdn1.com
+
+# Tencent Cloud CDN
+dnsv1.com
+myqcloud.com
+tcdnvod.com
+qcloud.com
+qq.com
+qcloudcjgj.com
+tencentcs.com
+tencent-cloud.com
+tencent-cloud.net
+tencentcloud.com
+
+# Huawei Cloud
+hwclouds.com
+myhuaweicloud.com
+hwwsdns.cn
+cdnhwc2.com
+huaweicloudwaf.cn
+huaweicloudwaf.com
+
+# ByteDance / TikTok CDN
+bytedns.net
+bytedns1.com
+bytedance.com
+bytefcdn-oversea.com
+bytedns3.com
+cdnbuild.net
+
+# Baidu Cloud
+baiduads.com
+bdydns.com
+
+# JD Cloud
+jcloud-cdn.com
+jcloudlb.com
+jdcloudcs.com
+jdcloudwaf.com
+jdcloud-oss.com
+
+# Kingsoft Cloud
+ks-cdn.com
+ks-cdn1.com
+ksyuncdn.com
+ksyungslb.com
+ksyungslb2.com
+ksyunv5.com
+
+# ChinaCache
+chinacache.com
+chinacache.net
+chinanetcenter.com
+
+# Qihu 360
+360cloudwaf.com
+360panyun.com
+360qhcdn.com
+360safedns.com
+360vcloud.com
+360wzb.com
+qhcdn.com
+qh-cdn.com
+qh-lb.com
+qihucdn.cn
+qihucdn.com
+
+# StackPath / MaxCDN
+stackpathcdn.com
+netdna-cdn.com
+netdna-ssl.com
+
+# KeyCDN
+kxcdn.com
+
+# BunnyCDN
+b-cdn.net
+
+# Incapsula / Imperva
+incapdns.net
+incapsula.com
+
+# Limelight / Edgio
+llnwd.net
+lldns.net
+edgecastcdn.net
+edgio.net
+
+# CDN77
+cdn77.org
+cdn77-ssl.net
+
+# CacheFly
+cachefly.net
+
+# Quantil / Level3
+footprint.net
+fpbns.net
+
+# Highwinds
+hwcdn.net
+
+# CDNetworks
+cdngc.net
+gccdn.net
+
+# Verizon Media / Yahoo
+yimg.com
+yahoodns.net
+
+# Sucuri
+sucuri.net
+
+# ArvanCloud
+arvancdn.com
+
+# G-Core Labs
+gcorelabs.net
+
+# OVH CDN
+ovh.net
+
+# DigitalOcean
+digitaloceanspaces.com
+
+# Generic CDN patterns
+cdn20.com
+cdn30.com
+cdntip.com
+scdnvk7n.com
+
+# China WAF & Security
+365cyd.cn
+365cyd.net
+anquanbao.com
+anquanbao.net
+jiashule.com
+jiasule.net
+jiasule.org
+nscloudwaf.com
+qaxcloudwaf.com
+saaswaf.com
+sangfordns.com
+wsdvs.com
+wsssec.com
+dbappwaf.cn
+cyudun.net
+
+# China Other CDN providers
+wscdns.com
+yjs-cdn.com
+yunjiasu-cdn.net
+yunjiasu.com
+jomodns.com
+iotacdn.net
+cloudcdn.net
+cloudfloordns.com
+cloudglb.com
+ccgslb.net
+bsgslb.com
+iidns.com
+lxdns.com
+wscloudcdn.com
+mwcloudcdn.com
+wsglb0.com
+wswebcdn.com
+wswebpic.com
+yunduncname.com
+vcloudgtm.com
+smtcdns.net
+ngaagslb.cn
+ourplat.net
+qianxun.com
+qss-lb.com
+
+# DiDiYun
+didiyunapi.com
+didiyun.com
+
+# Email services
+mxhichina.com
