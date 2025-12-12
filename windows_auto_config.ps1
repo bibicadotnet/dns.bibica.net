@@ -343,7 +343,7 @@ WScript.Sleep 1000
 
 ' Flush DNS cache
 ws.Run "ipconfig /flushdns", 0, True
-WScript.Sleep 500
+WScript.Sleep 1000
 
 ' Start winws
 ws.CurrentDirectory = "C:\dns-bibica-net-doh\zapret"
