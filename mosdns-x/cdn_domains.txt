@@ -1,4 +1,3 @@
-# Akamai
 akamaized.net
 edgesuite.net
 edgekey.net
@@ -10,37 +9,30 @@ akamaitechnologies.com
 akamaitechnologies.net
 akamaiedge.net.cn
 akamaistream.net.cn
-
-# Cloudflare
+akamai.net
+akamaized-staging.net
+akamaistream.net
 cloudflare.net
 cloudflare.com
 cloudflare-dns.com
 workers.dev
-
-# Fastly
 fastly.net
 fastlylb.net
 edgecompute.app
-
-# Amazon CloudFront & AWS
 cloudfront.net
 awsdns.com
 awsdns.net
 awsdns.org
 awsdns.co.uk
 amazonaws.com
-
-# Google Cloud CDN
 1e100.net
 googleusercontent.com
 gcdn.co
-
-# Microsoft Azure CDN
 azureedge.net
 azurefd.net
 trafficmanager.net
-
-# Alibaba Cloud CDN & WAF
+azure.com
+office.com
 alicdn.com
 alibabadns.com
 aliyuncs.com
@@ -62,11 +54,7 @@ aliyunwaf.com
 aliyunddos0012.com
 queniusy.com
 alidns.com
-
-#Bili
 bilicdn1.com
-
-# Tencent Cloud CDN
 dnsv1.com
 myqcloud.com
 tcdnvod.com
@@ -77,48 +65,34 @@ tencentcs.com
 tencent-cloud.com
 tencent-cloud.net
 tencentcloud.com
-
-# Huawei Cloud
 hwclouds.com
 myhuaweicloud.com
 hwwsdns.cn
 cdnhwc2.com
 huaweicloudwaf.cn
 huaweicloudwaf.com
-
-# ByteDance / TikTok CDN
 bytedns.net
 bytedns1.com
 bytedance.com
 bytefcdn-oversea.com
 bytedns3.com
 cdnbuild.net
-
-# Baidu Cloud
 baiduads.com
 bdydns.com
-
-# JD Cloud
 jcloud-cdn.com
 jcloudlb.com
 jdcloudcs.com
 jdcloudwaf.com
 jdcloud-oss.com
-
-# Kingsoft Cloud
 ks-cdn.com
 ks-cdn1.com
 ksyuncdn.com
 ksyungslb.com
 ksyungslb2.com
 ksyunv5.com
-
-# ChinaCache
 chinacache.com
 chinacache.net
 chinanetcenter.com
-
-# Qihu 360
 360cloudwaf.com
 360panyun.com
 360qhcdn.com
@@ -130,72 +104,36 @@ qh-cdn.com
 qh-lb.com
 qihucdn.cn
 qihucdn.com
-
-# StackPath / MaxCDN
 stackpathcdn.com
 netdna-cdn.com
 netdna-ssl.com
-
-# KeyCDN
 kxcdn.com
-
-# BunnyCDN
 b-cdn.net
-
-# Incapsula / Imperva
 incapdns.net
 incapsula.com
-
-# Limelight / Edgio
 llnwd.net
 lldns.net
 edgecastcdn.net
 edgio.net
-
-# CDN77
 cdn77.org
 cdn77-ssl.net
-
-# CacheFly
 cachefly.net
-
-# Quantil / Level3
 footprint.net
 fpbns.net
-
-# Highwinds
 hwcdn.net
-
-# CDNetworks
 cdngc.net
 gccdn.net
-
-# Verizon Media / Yahoo
 yimg.com
 yahoodns.net
-
-# Sucuri
 sucuri.net
-
-# ArvanCloud
 arvancdn.com
-
-# G-Core Labs
 gcorelabs.net
-
-# OVH CDN
 ovh.net
-
-# DigitalOcean
 digitaloceanspaces.com
-
-# Generic CDN patterns
 cdn20.com
 cdn30.com
 cdntip.com
 scdnvk7n.com
-
-# China WAF & Security
 365cyd.cn
 365cyd.net
 anquanbao.com
@@ -211,8 +149,6 @@ wsdvs.com
 wsssec.com
 dbappwaf.cn
 cyudun.net
-
-# China Other CDN providers
 wscdns.com
 yjs-cdn.com
 yunjiasu-cdn.net
@@ -238,10 +174,90 @@ ngaagslb.cn
 ourplat.net
 qianxun.com
 qss-lb.com
-
-# DiDiYun
 didiyunapi.com
 didiyun.com
-
-# Email services
 mxhichina.com
+akamaitechnologies.org
+akamaiehd.net
+cdn.cloudflare.net
+cloudflarestream.com
+cf-ipfs.com
+cfargotunnel.com
+cloudflareworkers.com
+fastly.global.ssl.fastly.net
+fastlydns.net
+cloudfronts.net
+amazonaws.com.cn
+s3.amazonaws.com
+s3-accelerate.amazonaws.com
+googlehosted.com
+gvt1.com
+gvt2.com
+gstatic.com
+googleapis.com
+azurecdn.net
+core.windows.net
+aliyun-cdn.net
+aliyun-oss.com
+tencent-cloud.cn
+tcdn.qq.com
+huaweicloud.com
+myhwclouds.com
+baidubce.com
+bdstatic.com
+byteimg.com
+bytecdn.cn
+pstatp.com
+ibytedtos.com
+tiktokcdn.com
+netlifyglobalcdn.com
+netlify.app
+vercel-cdn.com
+vercel.app
+bunnycdn.com
+bunny.net
+bunnycdn.ru
+keycdn.com
+stackpathdns.com
+existing-origin.stackpathdns.com
+maxcdn.com
+stackpath.com
+gcorelabs.com
+gcorecdn.net
+cdn.digitalocean.com
+ovhcdn.net
+cdn.ovh.net
+cdnetworks.com
+cdngslb.net
+medianova.com
+medianova.net
+mncdn.com
+belugacdn.com
+blazingcdn.com
+ahcdn.com
+sirv.com
+onapp.com
+onappcdn.com
+wangsu.com
+baishancdn.com
+baishan-cloud.net
+bsgslb.cn
+impervadns.net
+incapdns2.net
+panthercdn.com
+cedexis.net
+cedexis-radar.net
+quic.cloud
+litespeed.net
+vncdn.vn
+vcdn.vn
+vnncdn.net
+vnncdn.com
+vcdn.com.vn
+fptcdn.com
+cmccdn.vn
+zdn.vn
+viettelcdn.vn
+viettelcdn.com
+vinacdn.com
+kdata-cdn.com
