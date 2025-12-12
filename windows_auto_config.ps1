@@ -296,12 +296,10 @@ listen-ports:
   - 53
 upstream:
   - https://dns.bibica.net/dns-query
-bootstrap:
+bootstrap:  
   - 1.1.1.1:53
   - 8.8.8.8:53
-cache: true
-cache-size: 134217728
-cache-optimistic: true
+cache: false
 "@ | Out-File "$dnsproxyPath\config.yaml" -Encoding UTF8
 
 New-Item -ItemType File -Path "$dnsproxyPath\dnsproxy.log" -Force | Out-Null
@@ -333,6 +331,7 @@ lrepacks.net
 Set ws = CreateObject("WScript.Shell")
 Set objWMIService = GetObject("winmgmts:\\.\root\cimv2")
 
+' Terminate existing processes
 On Error Resume Next
 Set colProcesses = objWMIService.ExecQuery("SELECT * FROM Win32_Process WHERE Name = 'dnsproxy.exe' OR Name = 'winws.exe'")
 For Each objProcess in colProcesses
@@ -342,12 +341,18 @@ On Error GoTo 0
 
 WScript.Sleep 1000
 
-ws.CurrentDirectory = "$zapretPath"
+' Flush DNS cache
+ws.Run "ipconfig /flushdns", 0, True
+WScript.Sleep 500
+
+' Start winws
+ws.CurrentDirectory = "C:\dns-bibica-net-doh\zapret"
 ws.Run "winws.exe --wf-tcp=80,443 --wf-udp=443 --hostlist=blacklist.txt --dpi-desync=fake,disorder --dpi-desync-fooling=md5sig,badseq --dpi-desync-repeats=1", 0, False
 
 WScript.Sleep 2000
 
-ws.CurrentDirectory = "$dnsproxyPath"
+' Start dnsproxy
+ws.CurrentDirectory = "C:\dns-bibica-net-doh\dnsproxy"
 ws.Run "dnsproxy.exe --config-path=config.yaml --output=dnsproxy.log", 0, False
 "@ | Out-File "$installPath\dns-bibica-net-startup.vbs" -Encoding ASCII
 
