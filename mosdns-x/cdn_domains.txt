@@ -15,6 +15,7 @@ akam.net
 akamaized-staging.net
 akamaistream.net
 aaplimg.com
+zjcdn.com
 fbcdn.net
 facebook.com
 dnspod.com
