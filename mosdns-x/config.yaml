@@ -35,9 +35,8 @@ plugins:
     type: fast_forward
     args:
       upstream:
-        - addr: "https://doh.opendns.com/dns-query"
-        - addr: "https://dns.mullvad.net/dns-query"
-        - addr: "https://cloudflare-dns.com/dns-query"
+        - addr: "https://8.8.8.8/dns-query"
+        - addr: "https://8.8.4.4/dns-query"
 
   # Pipeline xử lý chính
   - tag: main
