@@ -23,7 +23,12 @@ dns:
   ratelimit_whitelist: []
   refuse_any: true
   upstream_dns:
+    - '# Mosdns-x'
     - 127.0.0.1:5301
+    - '# Tài khoản chính'
+    - '# https://bu0eg1tdzu.cloudflare-gateway.com/dns-query'
+    - '# Tài khoản doh-bibica-net'
+    - '# https://97nsi83nhg.cloudflare-gateway.com/dns-query'
     - '# Github (Mullvad)'
     - '[/nikke-en.com/]https://dns.mullvad.net/dns-query'
     - '[/github.io/]https://dns.mullvad.net/dns-query'
@@ -197,6 +202,15 @@ filtering:
       enabled: true
     - domain: www.bilibili.tv
       answer: www.bilibili.tv.w.cdngslb.com
+      enabled: true
+    - domain: down-vn.img.susercontent.com
+      answer: zshopee.v.baishan-cloud.net
+      enabled: true
+    - domain: www.apple.com
+      answer: www.apple.com.edgekey.net
+      enabled: true
+    - domain: v3-dy-o.zjcdn.com
+      answer: v3-dy-o.zjcdn.com.w.cdngslb.com
       enabled: true
   safe_fs_patterns:
     - /home/AdGuardHome/userfilters/*
