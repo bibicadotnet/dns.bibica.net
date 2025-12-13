@@ -51,6 +51,9 @@ systemctl daemon-reload
 systemctl enable mosdns
 systemctl restart mosdns
 
+echo "tls" | tee /etc/modules-load.d/tls.conf
+modprobe tls
+
 echo "  mosdns-x installed successfully!"
 echo "  Version: $LATEST"
 echo "  Config: /home/mosdns-x/config/config.yaml"
