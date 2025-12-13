@@ -16,6 +16,7 @@ akamaized-staging.net
 akamaistream.net
 aaplimg.com
 fbcdn.net
+facebook.com
 dnspod.com
 dnsv5.com
 dnse3.com
