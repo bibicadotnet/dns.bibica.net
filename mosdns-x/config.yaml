@@ -1,27 +1,32 @@
 log:
   level: info
   file: "/home/mosdns-x/log/mosdns.log"
-
 data_providers:
   - tag: cdn_domains
     file: "/home/mosdns-x/config/cdn_domains.txt"
     auto_reload: true
 
 plugins:
+  - tag: ecs_auto
+    type: ecs
+    args:
+      auto: true
+      force_overwrite: false
+  
   # Check domain trong QUESTION
   - tag: cdn_domain_matcher
     type: query_matcher
     args:
       domain:
         - "provider:cdn_domains"
-
+  
   # Check CNAME trong RESPONSE
   - tag: cdn_cname_matcher
     type: response_matcher
     args:
       cname:
         - "provider:cdn_domains"
-
+  
   # Upstream CDN (Cloudflare Gateway)
   - tag: cdn_upstream
     type: fast_forward
@@ -29,25 +34,32 @@ plugins:
       upstream:
         - addr: "https://bu0eg1tdzu.cloudflare-gateway.com/dns-query"
         - addr: "https://97nsi83nhg.cloudflare-gateway.com/dns-query"
-
+  
   # Upstream mặc định
   - tag: default_upstream
     type: fast_forward
     args:
       upstream:
-        - addr: "https://8.8.8.8/dns-query"
-        - addr: "https://8.8.4.4/dns-query"
+  #      - addr: "https://8.8.8.8/dns-query"
+  #      - addr: "https://8.8.4.4/dns-query"
+        - addr: "https://1.1.1.1/dns-query"
+        - addr: "https://1.0.0.1/dns-query"
 
   # Pipeline xử lý chính
   - tag: main
     type: sequence
     args:
       exec:
+        # Đầu tiên: đảm bảo có ECS
+        - ecs_auto
+        
         - if: cdn_domain_matcher
           exec:
             - cdn_upstream
             - _return
+        
         - default_upstream
+        
         - if: cdn_cname_matcher
           exec:
             - _drop_response
