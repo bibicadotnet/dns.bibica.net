@@ -15,6 +15,11 @@ akam.net
 akamaized-staging.net
 akamaistream.net
 aaplimg.com
+fbcdn.net
+dnspod.com
+dnsv5.com
+dnse3.com
+ovscdns.com
 cdnhwcchh18.com
 slatic.net
 cdnhwcick110.com
@@ -201,12 +206,10 @@ mxhichina.com
 hichina.com
 akamaitechnologies.org
 akamaiehd.net
-fastly.global.ssl.fastly.net
 fastlydns.net
 cloudfronts.net
 amazonaws.com.cn
-s3.amazonaws.com
-s3-accelerate.amazonaws.com
+amazonaws.com
 googlehosted.com
 gvt1.com
 gvt2.com
