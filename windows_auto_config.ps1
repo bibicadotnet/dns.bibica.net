@@ -567,43 +567,86 @@ try {
 }
 
 # ==================== Verify Performance ====================
-
 Write-Host "Verifying CDN Vietnam Optimization..." -ForegroundColor Gray
 Write-Host ""
+
+function Get-UserLocation {
+    try {
+        $response = Invoke-RestMethod -Uri "https://ipinfo.io/json" -TimeoutSec 5 -ErrorAction Stop
+        return @{
+            IP = $response.ip
+            City = $response.city
+            Country = $response.country
+            Org = $response.org
+        }
+    } catch {
+        return $null
+    }
+}
+
+function Get-IPLocation {
+    param([string]$IP)
+    try {
+        $response = Invoke-RestMethod -Uri "https://ipinfo.io/$IP/json" -TimeoutSec 5 -ErrorAction Stop
+        return @{
+            City = $response.city
+            Country = $response.country
+            Org = $response.org
+        }
+    } catch {
+        return $null
+    }
+}
+
+$userLoc = Get-UserLocation
+if ($userLoc) {
+    Write-Host "Your Location: $($userLoc.City), $($userLoc.Country)" -ForegroundColor Cyan
+    Write-Host "Your ISP: $($userLoc.Org)" -ForegroundColor Cyan
+    Write-Host ""
+}
+
 $targets = @(
     @{ Name = "Tiktok.com";   Domain = "v16-webapp-prime.tiktok.com" }
     @{ Name = "Bilibili.com"; Domain = "upos-hz-mirrorakam.akamaized.net" }
     @{ Name = "Apple.com";    Domain = "www.apple.com" }
+    @{ Name = "Amazon.com";    Domain = "www.amazon.com" }	
+    @{ Name = "Ebay.com";    Domain = "www.ebay.com" }	
     @{ Name = "Douyin.com";   Domain = "v3-dy-o.zjcdn.com" }
     @{ Name = "Bilibili.tv";  Domain = "www.bilibili.tv" }	
+    @{ Name = "Shopee.vn";  Domain = "cf.shopee.vn" }	
+    @{ Name = "Lazada.vn";  Domain = "img.lazcdn.com" }	
 )
 
 foreach ($t in $targets) {
-    # Set a fixed padding length (e.g., 10 characters) based on the longest name ("Bilibili" is 8)
     $pName = $t.Name.PadRight(15) 
     
     try {
-        # Ping the domain name. Test-Connection uses system DNS (127.0.0.1).
+        $resolvedIP = [System.Net.Dns]::GetHostAddresses($t.Domain)[0].IPAddressToString
         $ping = Test-Connection -ComputerName $t.Domain -Count 1 -ErrorAction Stop
         $ms = $ping.ResponseTime
         
-        # Latency string format (e.g., " (7ms) ")
-        $statusText = "($($ms)ms)"
+        $cdnLoc = Get-IPLocation -IP $resolvedIP
         
-        # Determine status and color
-        if ($ms -lt 10) {
-            $status = "[Optimized]"
-            $color = "Green"
+        $statusText = "($($ms)ms)"
+        $locationInfo = if ($cdnLoc) { " ($($cdnLoc.City), $($cdnLoc.Org))" } else { "" }
+        
+        # Check both city and ISP match
+        $cityMatch = $userLoc -and $cdnLoc -and $cdnLoc.City -eq $userLoc.City
+        $ispMatch = $userLoc -and $cdnLoc -and $cdnLoc.Org -eq $userLoc.Org
+        
+        if ($cityMatch -and $ispMatch) {
+            $color = "Green"  # Perfect: same city + same ISP
+        } elseif ($cityMatch) {
+            $color = "Cyan"   # Good: same city, different ISP
+        } elseif ($ms -lt 10) {
+            $color = "Yellow" # OK: low latency but different location
         } else {
-            $status = "[Normal]"
-            $color = "Yellow" 
+            $color = "Red"    # Bad: different location + high latency
         }
-
-        # Print result: Target Name (padded) | Latency | Status
-        Write-Host "  $pName $statusText $status" -ForegroundColor $color
-
+        
+        Write-Host "  $pName $statusText$locationInfo" -ForegroundColor $color
+        
     } catch {
-        # Catch DNS resolution failure or ping timeout
         Write-Host "  $pName Error" -ForegroundColor Red
     }
 }
