@@ -40,6 +40,7 @@ azure-dns.com
 microsoft.com
 apple.com
 apple-dns.net
+spotify.com
 cdn-apple.com
 adobe.net
 awsdns-12.co.uk
@@ -116,6 +117,8 @@ jdcloud-oss.com
 ks-cdn.com
 ks-cdn1.com
 ksyuncdn.com
+cloudcsp.com
+qtlcdn.com
 ksyungslb.com
 ksyungslb2.com
 ksyunv5.com
