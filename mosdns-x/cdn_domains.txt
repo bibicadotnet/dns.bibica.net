@@ -114,6 +114,10 @@ jcloudlb.com
 jdcloudcs.com
 jdcloudwaf.com
 jdcloud-oss.com
+queniuak.com
+alibaba-inc.com
+alibaba.com
+163jiasu.com
 ks-cdn.com
 ks-cdn1.com
 ksyuncdn.com
