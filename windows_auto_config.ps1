@@ -102,6 +102,22 @@ function Restore-DNSFromBackup {
     
     try {
         $backup = Import-Csv -Path $BackupFilePath -Encoding UTF8
+        
+        # Check if backup contains localhost DNS (corrupted backup)
+        $hasLocalhost = $false
+        foreach ($item in $backup) {
+            if ($item.DNSv4 -match '127\.0\.0\.1') {
+                $hasLocalhost = $true
+                break
+            }
+        }
+        
+        # If backup has localhost, it's corrupted - don't restore
+        if ($hasLocalhost) {
+            Write-Host "  Backup contains localhost DNS (corrupted), using fallback DNS instead" -ForegroundColor Yellow
+            return $false
+        }
+        
         foreach ($item in $backup) {
             try {
                 # Restore IPv4
