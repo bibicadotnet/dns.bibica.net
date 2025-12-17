@@ -335,7 +335,8 @@ rsload.net
 vn.linkedin.com
 medium.com
 steamcommunity.com
-store.steampowered.com
+steampowered.com
+steamstatic.com
 bilibili.tv
 www.bilibili.tv
 www.bbc.com
