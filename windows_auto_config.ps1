@@ -336,7 +336,9 @@ vn.linkedin.com
 medium.com
 steamcommunity.com
 steampowered.com
+steamcontent.com
 steamstatic.com
+steamserver.net
 bilibili.tv
 www.bilibili.tv
 www.bbc.com
