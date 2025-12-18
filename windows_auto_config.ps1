@@ -389,7 +389,7 @@ WScript.Sleep 1000
 
 ' Start winws
 ws.CurrentDirectory = "C:\dns-bibica-net-doh\zapret"
-ws.Run "winws.exe --wf-tcp=80,443 --wf-udp=443 --hostlist=blacklist.txt --dpi-desync=fake,disorder --dpi-desync-fooling=badseq --dpi-desync-repeats=2", 0, False
+ws.Run "winws.exe --wf-tcp=80,443 --wf-udp=443 --hostlist=blacklist.txt --dpi-desync=fake,disorder --dpi-desync-fooling=badseq --dpi-desync-repeats=1", 0, False
 
 WScript.Sleep 2000
 
