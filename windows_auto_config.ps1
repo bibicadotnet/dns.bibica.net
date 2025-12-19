@@ -331,7 +331,6 @@ New-Item -ItemType File -Path "$dnsproxyPath\dnsproxy.log" -Force | Out-Null
 @"
 pornhub.com
 www.pornhub.com
-rsload.net
 vn.linkedin.com
 medium.com
 bilibili.tv
@@ -340,10 +339,7 @@ www.bbc.com
 bbc.com
 www.bbc.co.uk
 bbc.co.uk
-steamcommunity.com
-steampowered.com
-store.steampowered.com
-help.steampowered.com
+rsload.net
 www.xvideos.com
 xvideos.com
 nyaa.si
@@ -366,6 +362,14 @@ sextop1.net
 sextop1.sale
 youporn.com
 "@ | Out-File "$zapretPath\blacklist.txt" -Encoding UTF8
+
+# Create Zapret blacklist light
+@"
+steamcommunity.com
+steampowered.com
+store.steampowered.com
+help.steampowered.com
+"@ | Out-File "$zapretPath\blacklist-1.txt" -Encoding UTF8
 
 # Create Zapret blacklist light
 @"
@@ -395,7 +399,7 @@ ws.Run "ipconfig /flushdns", 0, True
 WScript.Sleep 1000
 
 ws.CurrentDirectory = "C:\dns-bibica-net-doh\zapret"
-ws.Run "winws.exe --wf-tcp=80,443 --hostlist=blacklist.txt --dpi-desync=fake,multidisorder --dpi-desync-split-pos=1,midsld --dpi-desync-fooling=badseq,md5sig --dpi-desync-repeats=6 --new --hostlist=blacklist-light.txt --dpi-desync=fake --dpi-desync-ttl=1", 0, False
+ws.Run "winws.exe --wf-tcp=80,443 --wf-udp=443 --hostlist=blacklist.txt --dpi-desync=fake,disorder2 --dpi-desync-fooling=badseq --dpi-desync-repeats=6 --new --hostlist=blacklist-light.txt --dpi-desync=fake --dpi-desync-ttl=1 --new --hostlist=blacklist-1.txt --dpi-desync=fake,multidisorder --dpi-desync-split-pos=midsld --dpi-desync-repeats=6 --dpi-desync-fooling=badseq,md5sig", 0, False
 WScript.Sleep 2000
 
 ws.CurrentDirectory = "C:\dns-bibica-net-doh\dnsproxy"
