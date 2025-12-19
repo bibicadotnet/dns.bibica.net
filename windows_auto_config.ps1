@@ -395,7 +395,7 @@ ws.Run "ipconfig /flushdns", 0, True
 WScript.Sleep 1000
 
 ws.CurrentDirectory = "C:\dns-bibica-net-doh\zapret"
-ws.Run "winws.exe --wf-tcp=80,443 --hostlist=blacklist.txt --dpi-desync=fake,disorder2 --dpi-desync-fooling=badseq --dpi-desync-repeats=3 --new --hostlist=blacklist-light.txt --dpi-desync=fake --dpi-desync-ttl=1 --dpi-desync-fake-syndata", 0, False
+ws.Run "winws.exe --wf-tcp=80,443 --hostlist=blacklist.txt --dpi-desync=fake,disorder2 --dpi-desync-fooling=badseq --dpi-desync-repeats=3 --new --hostlist=blacklist-light.txt --dpi-desync=fake --dpi-desync-ttl=1", 0, False
 WScript.Sleep 2000
 
 ws.CurrentDirectory = "C:\dns-bibica-net-doh\dnsproxy"
@@ -511,21 +511,30 @@ Start-Process "wscript.exe" -ArgumentList "`"$installPath\dns-bibica-net-startup
 # ==================== Verify Services ====================
 Write-Host "Verifying services..." -ForegroundColor Gray
 
-$serviceStarted = Wait-ProcessStarted -ProcessNames @("dnsproxy", "winws") -TimeoutSeconds 5
+Start-Sleep -Seconds 3
 
-if (-not $serviceStarted) {
-    Start-Sleep -Seconds 2
-    $serviceStarted = Wait-ProcessStarted -ProcessNames @("dnsproxy", "winws") -TimeoutSeconds 5
-    
-    if (-not $serviceStarted) {
-        Start-Sleep -Seconds 2
-        $serviceStarted = Wait-ProcessStarted -ProcessNames @("dnsproxy", "winws") -TimeoutSeconds 5
-    }
-}
+$serviceStarted = Wait-ProcessStarted -ProcessNames @("dnsproxy", "winws") -TimeoutSeconds 10
 
 if (-not $serviceStarted) {
     Write-Host ""
     Write-Host "ERROR: Services failed to start" -ForegroundColor Red
+    
+    $dnsproxy = Get-Process -Name "dnsproxy" -ErrorAction SilentlyContinue
+    $winws = Get-Process -Name "winws" -ErrorAction SilentlyContinue
+    
+    if ($dnsproxy) {
+        Write-Host "  dnsproxy: Running (PID: $($dnsproxy.Id))" -ForegroundColor Yellow
+    } else {
+        Write-Host "  dnsproxy: Not found" -ForegroundColor Red
+    }
+    
+    if ($winws) {
+        Write-Host "  winws: Running (PID: $($winws.Id))" -ForegroundColor Yellow
+    } else {
+        Write-Host "  winws: Not found" -ForegroundColor Red
+    }
+    
+    Write-Host ""
     Write-Host "Restoring DNS settings..." -ForegroundColor Yellow
     if (Restore-DNSFromBackup -BackupFilePath $backupFile) {
         Write-Host "DNS restored successfully" -ForegroundColor Green
@@ -534,7 +543,7 @@ if (-not $serviceStarted) {
     }
     
     Write-Host ""
-    Write-Host "Please check logs at: $dnsproxyPath\dnsproxy.log" -ForegroundColor Yellow
+    Write-Host "Check log: $dnsproxyPath\dnsproxy.log" -ForegroundColor Yellow
     Write-Host ""
     Read-Host "Press Enter to exit"
     exit
