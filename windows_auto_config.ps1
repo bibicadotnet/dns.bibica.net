@@ -334,17 +334,14 @@ www.pornhub.com
 rsload.net
 vn.linkedin.com
 medium.com
-steamcommunity.com
-steampowered.com
-steamcontent.com
-steamstatic.com
-steamserver.net
 bilibili.tv
 www.bilibili.tv
 www.bbc.com
 bbc.com
 www.bbc.co.uk
 bbc.co.uk
+steamcommunity.com
+steampowered.com
 www.xvideos.com
 xvideos.com
 nyaa.si
@@ -368,32 +365,33 @@ sextop1.sale
 youporn.com
 "@ | Out-File "$zapretPath\blacklist.txt" -Encoding UTF8
 
+# Create Zapret blacklist light
+@"
+steamcontent.com
+steamstatic.com
+steamserver.net
+"@ | Out-File "$zapretPath\blacklist-light.txt" -Encoding UTF8
+
 # VBS startup launcher
 @"
 Set ws = CreateObject("WScript.Shell")
 Set objWMIService = GetObject("winmgmts:\\.\root\cimv2")
 
-' Terminate existing processes
 On Error Resume Next
 Set colProcesses = objWMIService.ExecQuery("SELECT * FROM Win32_Process WHERE Name = 'dnsproxy.exe' OR Name = 'winws.exe'")
 For Each objProcess in colProcesses
     objProcess.Terminate()
 Next
 On Error GoTo 0
-
 WScript.Sleep 1000
 
-' Flush DNS cache
 ws.Run "ipconfig /flushdns", 0, True
 WScript.Sleep 1000
 
-' Start winws
 ws.CurrentDirectory = "C:\dns-bibica-net-doh\zapret"
-ws.Run "winws.exe --wf-tcp=80,443 --wf-udp=443 --hostlist=blacklist.txt --dpi-desync=fake,disorder --dpi-desync-fooling=badseq --dpi-desync-repeats=1", 0, False
-
+ws.Run "winws.exe --wf-tcp=80,443 --hostlist=blacklist.txt --dpi-desync=fake,disorder2 --dpi-desync-fooling=badseq --dpi-desync-repeats=3 --new --hostlist=blacklist-light.txt --dpi-desync=fake --dpi-desync-ttl=3", 0, False
 WScript.Sleep 2000
 
-' Start dnsproxy
 ws.CurrentDirectory = "C:\dns-bibica-net-doh\dnsproxy"
 ws.Run "dnsproxy.exe --config-path=config.yaml --output=dnsproxy.log", 0, False
 "@ | Out-File "$installPath\dns-bibica-net-startup.vbs" -Encoding ASCII
