@@ -363,7 +363,7 @@ sextop1.sale
 youporn.com
 "@ | Out-File "$zapretPath\blacklist.txt" -Encoding UTF8
 
-# Create Zapret blacklist light
+# Create Zapret blacklist-1
 @"
 steamcommunity.com
 steampowered.com
@@ -399,7 +399,7 @@ ws.Run "ipconfig /flushdns", 0, True
 WScript.Sleep 1000
 
 ws.CurrentDirectory = "C:\dns-bibica-net-doh\zapret"
-ws.Run "winws.exe --wf-tcp=80,443 --wf-udp=443 --hostlist=blacklist.txt --dpi-desync=fake,disorder2 --dpi-desync-fooling=badseq --dpi-desync-repeats=6 --new --hostlist=blacklist-light.txt --dpi-desync=fake --dpi-desync-ttl=1 --new --hostlist=blacklist-1.txt --dpi-desync=fake,multidisorder --dpi-desync-split-pos=midsld --dpi-desync-repeats=6 --dpi-desync-fooling=badseq,md5sig", 0, False
+ws.Run "winws.exe --wf-tcp=80,443 --wf-udp=443 --hostlist=blacklist.txt --dpi-desync=fake,disorder2 --dpi-desync-fooling=badseq --dpi-desync-repeats=6 --new --hostlist=blacklist-light.txt --dpi-desync=split2 --dpi-desync-split-pos=2 --new --hostlist=blacklist-1.txt --dpi-desync=fake,multidisorder --dpi-desync-split-pos=midsld --dpi-desync-repeats=6 --dpi-desync-fooling=badseq,md5sig", 0, False
 WScript.Sleep 2000
 
 ws.CurrentDirectory = "C:\dns-bibica-net-doh\dnsproxy"
