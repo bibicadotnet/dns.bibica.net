@@ -380,14 +380,14 @@ For Each objProcess in colProcesses
     objProcess.Terminate()
 Next
 On Error GoTo 0
-WScript.Sleep 1000
+WScript.Sleep 200
 
 ws.Run "ipconfig /flushdns", 0, True
-WScript.Sleep 1000
+WScript.Sleep 200
 
 ws.CurrentDirectory = "C:\dns-bibica-net-doh\zapret"
 ws.Run "winws.exe --wf-tcp=80,443 --wf-udp=443 --hostlist=blacklist.txt --dpi-desync=fake,disorder2 --dpi-desync-fooling=badseq --dpi-desync-repeats=6", 0, False
-WScript.Sleep 2000
+WScript.Sleep 200
 
 ws.CurrentDirectory = "C:\dns-bibica-net-doh\dnsproxy"
 ws.Run "dnsproxy.exe --config-path=config.yaml --output=dnsproxy.log", 0, False
@@ -502,7 +502,7 @@ Start-Process "wscript.exe" -ArgumentList "`"$installPath\dns-bibica-net-startup
 # ==================== Verify Services ====================
 Write-Host "Verifying services..." -ForegroundColor Gray
 
-Start-Sleep -Seconds 3
+Start-Sleep -Seconds 5
 
 $serviceStarted = Wait-ProcessStarted -ProcessNames @("dnsproxy", "winws") -TimeoutSeconds 10
 
