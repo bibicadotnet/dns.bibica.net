@@ -186,7 +186,11 @@ function Download-ZapretFiles {
     try {
         # Get latest commit info for zapret-winws folder
         $commitInfo = Invoke-RestMethod "https://api.github.com/repos/bol-van/zapret-win-bundle/commits?path=zapret-winws&per_page=1" -ErrorAction Stop
-        $commitDate = [DateTime]::Parse($commitInfo[0].commit.author.date).ToString("yyyy-MM-dd")
+         $commitDate = if ($commitInfo[0].commit.author.date) { 
+             $commitInfo[0].commit.author.date.Substring(0, 10) 
+         } else { 
+             "unknown" 
+         }
         $commitHash = $commitInfo[0].sha.Substring(0, 7)
         Write-Host "  Build: $commitDate ($commitHash)" -ForegroundColor DarkGray
         
