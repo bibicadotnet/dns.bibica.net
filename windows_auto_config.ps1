@@ -730,83 +730,100 @@ try {
     Write-Host "  WARNING: Could not flush DNS cache: $_" -ForegroundColor Yellow
 }
 
-# ==================== Verify Performance ====================
+# ==================== Verify Performance (Simple Logic) ====================
+# Force TLS 1.2
+[Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
+
+# Fake User-Agent to avoid blocking from api.ip.sb
+$headers = @{
+    "User-Agent" = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
+}
+
 Write-Host "Verifying CDN Vietnam Optimization..." -ForegroundColor Gray
 Write-Host ""
+
 function Get-UserLocation {
     try {
-        $response = Invoke-RestMethod -Uri "https://ipinfo.io/json" -TimeoutSec 5 -ErrorAction Stop
+        $response = Invoke-RestMethod -Uri "https://api.ip.sb/geoip" -Headers $headers -TimeoutSec 5 -ErrorAction Stop
         return @{
-            IP = $response.ip
-            City = $response.city
+            IP      = $response.ip
+            City    = $response.city
             Country = $response.country
-            Org = $response.org
+            ISP     = $response.asn_organization 
         }
     } catch {
         return $null
     }
 }
+
 function Get-IPLocation {
     param([string]$IP)
     try {
+        # Using ipinfo.io for target IP details
         $response = Invoke-RestMethod -Uri "https://ipinfo.io/$IP/json" -TimeoutSec 5 -ErrorAction Stop
         return @{
-            City = $response.city
+            City    = $response.city
             Country = $response.country
-            Org = $response.org
+            Org     = $response.org
         }
     } catch {
         return $null
     }
 }
+
 $userLoc = Get-UserLocation
 if ($userLoc) {
     Write-Host "Your Location: $($userLoc.City), $($userLoc.Country)" -ForegroundColor Cyan
-    Write-Host "Your ISP: $($userLoc.Org)" -ForegroundColor Cyan
+    Write-Host "Your ISP:      $($userLoc.ISP)" -ForegroundColor Cyan
     Write-Host ""
 }
 
 $targets = @(
     @{ Name = "Tiktok.com";    Domain = "v16-webapp-prime.tiktok.com" }
-    @{ Name = "Bilibili.com"; Domain = "upos-hz-mirrorakam.akamaized.net" }
+    @{ Name = "Bilibili.com";  Domain = "upos-hz-mirrorakam.akamaized.net" }
     @{ Name = "Apple.com";     Domain = "www.apple.com" }
-    @{ Name = "Amazon.com";     Domain = "www.amazon.com" }
-    @{ Name = "Ebay.com";     Domain = "www.ebay.com" }
+    @{ Name = "Amazon.com";    Domain = "www.amazon.com" }
+    @{ Name = "Ebay.com";      Domain = "www.ebay.com" }
     @{ Name = "Douyin.com";    Domain = "v3-dy-o.zjcdn.com" }
-    @{ Name = "Bilibili.tv";  Domain = "www.bilibili.tv" }
-    @{ Name = "Shopee.vn";  Domain = "cf.shopee.vn" }
-    @{ Name = "Lazada.vn";  Domain = "img.lazcdn.com" }
+    @{ Name = "Bilibili.tv";   Domain = "www.bilibili.tv" }
+    @{ Name = "Shopee.vn";     Domain = "cf.shopee.vn" }
+    @{ Name = "Lazada.vn";     Domain = "img.lazcdn.com" }
 )
+
 foreach ($t in $targets) {
     $pName = $t.Name.PadRight(15)
+    
+    # Small delay to prevent API rate limiting
+    Start-Sleep -Milliseconds 200
+    
     try {
+        # 1. Resolve IP
         $resolvedIP = [System.Net.Dns]::GetHostAddresses($t.Domain)[0].IPAddressToString
+        
+        # 2. Ping Latency
         $ping = Test-Connection -ComputerName $t.Domain -Count 1 -ErrorAction Stop
         $ms = $ping.ResponseTime
         
+        # 3. Get Location Info (For display only)
         $cdnLoc = Get-IPLocation -IP $resolvedIP
         
+        # --- NEW SIMPLE LOGIC ---
+        if ($ms -lt 10) {
+            $color = "Green"
+        } elseif ($ms -lt 20) {
+            $color = "Yellow"
+        } else {
+            $color = "Red"
+        }
+        # ------------------------
+
         $statusText = "($($ms)ms)"
         $locationInfo = if ($cdnLoc) { " ($($cdnLoc.City), $($cdnLoc.Org))" } else { "" }
-        
-        # Check both city and ISP match
-        $cityMatch = $userLoc -and $cdnLoc -and $cdnLoc.City -eq $userLoc.City
-        $ispMatch = $userLoc -and $cdnLoc -and $cdnLoc.Org -eq $userLoc.Org
-        
-        if ($cityMatch -and $ispMatch) {
-            $color = "Green"  # Perfect: same city + same ISP
-        } elseif ($cityMatch) {
-            $color = "Cyan"   # Good: same city, different ISP
-        } elseif ($ms -lt 10) {
-            $color = "Yellow" # OK: low latency but different location
-        } else {
-            $color = "Red"    # Bad: different location + high latency
-        }
         
         Write-Host "  $pName $statusText$locationInfo" -ForegroundColor $color
         
     } catch {
-        Write-Host "  $pName Error" -ForegroundColor Red
+        Write-Host "  $pName Error / Timeout" -ForegroundColor Red
     }
 }
 
