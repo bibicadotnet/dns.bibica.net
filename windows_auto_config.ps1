@@ -36,6 +36,8 @@ function Stop-AllServices {
     Get-WmiObject Win32_Process | Where-Object {
         $_.Name -eq "wscript.exe" -and $_.CommandLine -like "*dns-bibica-net-startup.vbs*"
     } | ForEach-Object { $_.Terminate() }
+    
+    Get-Process -Name "net", "net1" -ErrorAction SilentlyContinue | Stop-Process -Force -ErrorAction SilentlyContinue
 }
 
 function Wait-ProcessStopped {
@@ -83,10 +85,13 @@ function Test-LocalDNS {
 function Unload-WinDivertDriver {
     Get-Service -Name "WinDivert*" -ErrorAction SilentlyContinue | ForEach-Object {
         Stop-Service -Name $_.Name -Force -ErrorAction SilentlyContinue
+        Start-Sleep -Milliseconds 500  # ← Thêm delay
         sc.exe delete $_.Name 2>$null | Out-Null
     }
     sc.exe stop WinDivert 2>$null | Out-Null
+    Start-Sleep -Milliseconds 500  # ← Thêm delay
     sc.exe delete WinDivert 2>$null | Out-Null
+    Start-Sleep -Seconds 1  # ← Đợi kernel release driver
 }
 
 function Get-AllAdapters {
@@ -267,7 +272,7 @@ function Remove-OldServices {
             
             if ($service.Status -eq 'Running') {
                 Stop-Service -Name $serviceName -Force -ErrorAction SilentlyContinue
-                Start-Sleep -Milliseconds 500
+                Start-Sleep -Seconds 2
             }
             
             & $nssmPath remove $serviceName confirm 2>$null | Out-Null
@@ -305,6 +310,10 @@ Stop-AllServices
 Remove-OldStartupMethods
 
 Wait-ProcessStopped -ProcessNames @("dnsproxy", "winws") | Out-Null
+
+Get-Process -Name "net", "net1" -ErrorAction SilentlyContinue | Stop-Process -Force -ErrorAction SilentlyContinue
+Start-Sleep -Seconds 2
+
 Unload-WinDivertDriver
 Start-Sleep -Milliseconds 500
 
@@ -315,7 +324,7 @@ if (Test-Path $installPath) {
         Copy-Item $nssmPath $tempNSSM -Force -ErrorAction SilentlyContinue
     }
     
-    # Remove old services using existing NSSM
+	# Remove old services using existing NSSM
     if (Test-Path $tempNSSM) {
         $servicesToRemove = @($dnsproxyServiceName, $winwsServiceName)
         foreach ($serviceName in $servicesToRemove) {
@@ -323,6 +332,7 @@ if (Test-Path $installPath) {
             if ($service) {
                 if ($service.Status -eq 'Running') {
                     Stop-Service -Name $serviceName -Force -ErrorAction SilentlyContinue
+                    Start-Sleep -Seconds 2
                 }
                 & $tempNSSM remove $serviceName confirm 2>$null | Out-Null
                 sc.exe delete $serviceName 2>$null | Out-Null
@@ -331,11 +341,14 @@ if (Test-Path $installPath) {
         Remove-Item $tempNSSM -Force -ErrorAction SilentlyContinue
     }
     
+    Unload-WinDivertDriver
+    Start-Sleep -Seconds 3
+    
     Remove-Item $installPath -Recurse -Force -ErrorAction SilentlyContinue
-    Start-Sleep -Milliseconds 300
+    Start-Sleep -Seconds 2
     
     if (Test-Path $installPath) {
-        Start-Sleep -Seconds 1
+        Start-Sleep -Seconds 2
         Remove-Item $installPath -Recurse -Force -ErrorAction SilentlyContinue
     }
     
@@ -473,23 +486,31 @@ sextop1.sale
 youporn.com
 "@ | Out-File "$zapretPath\blacklist.txt" -Encoding UTF8
 
-# VBS restart script (for manual restart after config changes)
+# BAT restart script (for manual restart after config changes)
 @"
-Set ws = CreateObject("WScript.Shell")
+@echo off
+net session >nul 2>&1
+if %errorLevel% neq 0 (
+    echo Requesting Administrator privileges...
+    powershell -Command "Start-Process '%~f0' -Verb RunAs"
+    exit /b
+)
 
-On Error Resume Next
-ws.Run "net stop $winwsServiceName", 0, True
-ws.Run "net stop $dnsproxyServiceName", 0, True
-On Error GoTo 0
+echo Stopping services...
+net stop $dnsproxyServiceName /y
+net stop $winwsServiceName /y
 
-WScript.Sleep 500
-ws.Run "ipconfig /flushdns", 0, True
-WScript.Sleep 200
+echo Flushing DNS cache...
+ipconfig /flushdns
 
-ws.Run "net start $winwsServiceName", 0, True
-WScript.Sleep 300
-ws.Run "net start $dnsproxyServiceName", 0, True
-"@ | Out-File "$installPath\dns-bibica-net-restart.vbs" -Encoding ASCII
+echo Restarting services...
+net start $winwsServiceName
+net start $dnsproxyServiceName
+
+echo.
+echo All services restarted successfully!
+pause
+"@ | Out-File "$installPath\dns-bibica-net-restart.bat" -Encoding ASCII
 
 # Uninstall script
 @"
@@ -506,6 +527,11 @@ echo.
 echo Stopping and removing services...
 net stop $dnsproxyServiceName >nul 2>&1
 net stop $winwsServiceName >nul 2>&1
+timeout /t 2 /nobreak >nul
+
+REM Kill net.exe processes that might hold folder handles
+taskkill /F /IM net.exe >nul 2>&1
+taskkill /F /IM net1.exe >nul 2>&1
 timeout /t 1 /nobreak >nul
 
 "$nssmPath" remove $dnsproxyServiceName confirm >nul 2>&1
@@ -542,6 +568,12 @@ if exist "$backupFile" (
 echo.
 echo Removing files...
 cd /d "%TEMP%"
+
+REM Kill net.exe one more time before removing folder
+taskkill /F /IM net.exe >nul 2>&1
+taskkill /F /IM net1.exe >nul 2>&1
+timeout /t 1 /nobreak >nul
+
 rmdir /s /q "$installPath" >nul 2>&1
 
 if exist "$installPath" (
@@ -837,7 +869,7 @@ Write-Host "System DNS: 127.0.0.1 (dns.bibica.net DoH + Zapret DPI bypass)" -For
 Write-Host "Services: Running and will auto-start on boot" -ForegroundColor Green
 Write-Host ""
 Write-Host "Install location: $installPath" -ForegroundColor Gray
-Write-Host "To restart services: $installPath\dns-bibica-net-restart.vbs" -ForegroundColor Gray
+Write-Host "To restart services: $installPath\dns-bibica-net-restart.bat" -ForegroundColor Gray
 Write-Host "To uninstall: $installPath\uninstall.bat" -ForegroundColor Gray
 Write-Host ""
 Write-Host "Press any key to exit..."
