@@ -1,4 +1,4 @@
-name: Build dns.bibica.net EXE
+name: Build DNS Bibica EXE
 
 on:
   push:
@@ -18,7 +18,7 @@ jobs:
         run: |
           # 1. Create the loader script (Stub) with English comments
           $loader_script = @"
-          # Force TLS 1.2 for compatibility with older Windows versions (7/8/10 old builds)
+          # Force TLS 1.2 for compatibility with older Windows versions
           [Net.ServicePointManager]::SecurityProtocol = [Net.ServicePointManager]::SecurityProtocol -bor 3072
           
           # Check for Administrator rights
@@ -27,10 +27,8 @@ jobs:
               
               # Restart with Admin privileges
               if (`$exePath -like "*powershell.exe*") {
-                  # If running as raw .ps1 script
                   Start-Process powershell.exe "-NoProfile -ExecutionPolicy Bypass -Command `"irm https://go.bibica.net/dns-bibica-net | iex`"" -Verb RunAs
               } else {
-                  # If running as compiled .exe
                   Start-Process "`$exePath" -Verb RunAs
               }
               exit
@@ -48,20 +46,18 @@ jobs:
           }
           "@
           
-          # Save the stub with UTF8 encoding
           Set-Content -Path "loader-stub.ps1" -Value $loader_script -Encoding UTF8
 
           # 2. Install ps2exe module
           Install-Module -Name ps2exe -Force -Scope CurrentUser
 
-          # 3. Compile to EXE with the requested filename: dns.bibica.net.exe
+          # 3. Compile to EXE - Removed -NoConsole to ensure it shows the terminal
           ps2exe .\loader-stub.ps1 .\dns.bibica.net.exe `
             -Title "dns.bibica.net" `
             -Description "Auto-update DoH & DPI Bypass" `
             -Company "Bibica.net" `
             -Product "dns.bibica.net" `
-            -Copyright "2026 Bibica.net" `
-            -NoConsole `$false
+            -Copyright "2026 Bibica.net"
 
       - name: Upload EXE to Artifacts
         uses: actions/upload-artifact@v4
