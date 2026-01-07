@@ -431,7 +431,10 @@ listen-addrs:
 listen-ports:
   - 53
 upstream:
+  - quic://dns.bibica.net
+fallback:
   - https://dns.bibica.net/dns-query
+timeout: 500ms
 bootstrap:
   - 1.1.1.1:53
   - 8.8.8.8:53
