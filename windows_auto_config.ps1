@@ -431,14 +431,13 @@ listen-addrs:
 listen-ports:
   - 53
 upstream:
-  - quic://dns.bibica.net
-fallback:
   - https://dns.bibica.net/dns-query
-timeout: 500ms
 bootstrap:
   - 1.1.1.1:53
   - 8.8.8.8:53
-cache: false
+cache: true
+cache-size: 134217728
+cache-optimistic: true
 "@ | Out-File "$dnsproxyPath\config.yaml" -Encoding UTF8
 
 New-Item -ItemType File -Path "$dnsproxyPath\dnsproxy.log" -Force | Out-Null
