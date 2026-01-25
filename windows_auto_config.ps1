@@ -431,7 +431,7 @@ listen-addrs:
 listen-ports:
   - 53
 upstream:
-  - https://dns.bibica.net/dns-query
+  - quic://dns.bibica.net
 bootstrap:
   - 1.1.1.1:53
   - 8.8.8.8:53
