@@ -431,10 +431,14 @@ listen-addrs:
 listen-ports:
   - 53
 upstream:
+  - quic://dns.bibica.net
+fallback:
+  - h3://dns.bibica.net/dns-query
   - https://dns.bibica.net/dns-query
-bootstrap:
+bootstrap:  
   - 1.1.1.1:53
   - 8.8.8.8:53
+timeout: 1s
 cache: false
 "@ | Out-File "$dnsproxyPath\config.yaml" -Encoding UTF8
 
