@@ -4,6 +4,9 @@
 clear
 $DOH_SERVER     = "https://dns.bibica.net/dns-query"
 $DOH_SERVER_CF  = "https://1.1.1.1/dns-query"
+$DOT_SERVER     = "dns.bibica.net:853"
+$DOT_SERVER_CF  = "1.1.1.1:853"
+$DOQ_SERVER     = "quic://dns.bibica.net:853"
 $DURATION       = "5s"
 $INSTALL_DIR    = "C:\dns-bibica-net"
 $OUTPUT_DIR     = "$INSTALL_DIR\results"
@@ -56,9 +59,11 @@ if (-not (Test-Path $dnspyreExe)) {
 # DEFINE TEST SCENARIOS
 # ========================================
 $Tests = @(
-    @{Name="DoH HTTP/1.1"; Protocol="1.1"; Concurrency=1; Color="Cyan"},
-    @{Name="DoH HTTP/2"; Protocol="2"; Concurrency=1; Color="Yellow"},
-    @{Name="DoH HTTP/3"; Protocol="3"; Concurrency=1; Color="Magenta"}
+    @{Name="DoH HTTP/1.1"; Protocol="1.1"; Type="DoH"; Concurrency=1; Color="Cyan"},
+    @{Name="DoH HTTP/2"; Protocol="2"; Type="DoH"; Concurrency=1; Color="Yellow"},
+    @{Name="DoH HTTP/3"; Protocol="3"; Type="DoH"; Concurrency=1; Color="Magenta"},
+    @{Name="DoT"; Protocol=$null; Type="DoT"; Concurrency=1; Color="Green"},
+    @{Name="DoQ"; Protocol=$null; Type="DoQ"; Concurrency=1; Color="Blue"}
 )
 
 # ========================================
@@ -156,14 +161,13 @@ function Parse-DnspyreOutput {
 # RUN TEST FUNCTION
 # ========================================
 function Run-Test {
-    param ($Server, $Protocol, $Concurrency, $TestName)
+    param ($Server, $Type, $Protocol, $Concurrency, $TestName)
 
     $timestamp = [DateTimeOffset]::UtcNow.ToUnixTimeMilliseconds()
     $random = Get-Random -Minimum 100000 -Maximum 999999
     $domain = "${timestamp}${random}.dns.bibica.net"
 
-	
-    $serverName = ($Server -split '/')[2]
+    $serverName = ($Server -replace 'https://|quic://', '') -split '[:/]' | Select-Object -First 1
 
     # Sanitize filename - remove ALL special characters including dots
     $sanitizedTestName = $TestName -replace '[^a-zA-Z0-9]', '_'
@@ -175,11 +179,16 @@ function Run-Test {
     Write-Host "[TEST] $TestName - $serverName" -ForegroundColor White
     Write-Host "========================================" -ForegroundColor Cyan
     
-    $cmd = "$dnspyreExe --server $Server --doh-protocol $Protocol --duration $DURATION --concurrency $Concurrency --no-progress --no-distribution $domain"
-    Write-Host "Command: $cmd" -ForegroundColor DarkGray
+    $args = "--server $Server --duration $DURATION --concurrency $Concurrency --no-progress --no-distribution $domain"
+    if ($Type -eq "DoH") { $args += " --doh-protocol $Protocol" }
+    elseif ($Type -eq "DoT") { $args += " --dot" }
+
+    Write-Host "Command: dnspyre $args" -ForegroundColor DarkGray
     Write-Host ""
 
-    $output = & $dnspyreExe --server $Server --doh-protocol $Protocol --duration $DURATION --concurrency $Concurrency --no-progress --no-distribution $domain 2>&1
+    # Fix Invoke-Expression syntax error
+    $fullCmd = "& `"$dnspyreExe`" $args"
+    $output = Invoke-Expression "$fullCmd 2>&1"
     
     # Ensure output directory exists before writing
     if (-not (Test-Path $OUTPUT_DIR)) {
@@ -187,7 +196,6 @@ function Run-Test {
     }
     
     $output | Out-File -FilePath $outputFile -Encoding UTF8 -Force
-
     $output | ForEach-Object { Write-Host $_ }
 
     $result = Parse-DnspyreOutput -OutputFile $outputFile -TestName $TestName -Server $serverName
@@ -206,12 +214,13 @@ function Run-Test {
 # RUN ALL TESTS
 # ========================================
 Write-Host "`n========================================" -ForegroundColor Yellow
-Write-Host "STARTING DoH BENCHMARK TESTS" -ForegroundColor Yellow
+Write-Host "STARTING BENCHMARK TESTS" -ForegroundColor Yellow
 Write-Host "========================================`n" -ForegroundColor Yellow
 
 foreach ($test in $Tests) {
     # Test against bibica.net
-    $result1 = Run-Test -Server $DOH_SERVER -Protocol $test.Protocol -Concurrency $test.Concurrency -TestName $test.Name
+    $targetBibica = if ($test.Type -eq "DoT") { $DOT_SERVER } elseif ($test.Type -eq "DoQ") { $DOQ_SERVER } else { $DOH_SERVER }
+    $result1 = Run-Test -Server $targetBibica -Type $test.Type -Protocol $test.Protocol -Concurrency $test.Concurrency -TestName $test.Name
     if ($null -ne $result1) {
         # Add color metadata
         $result1 | Add-Member -MemberType NoteProperty -Name "Color" -Value $test.Color -Force
@@ -219,14 +228,17 @@ foreach ($test in $Tests) {
     }
     Start-Sleep -Seconds 2
 
-    # Test against Cloudflare
-    $result2 = Run-Test -Server $DOH_SERVER_CF -Protocol $test.Protocol -Concurrency $test.Concurrency -TestName $test.Name
-    if ($null -ne $result2) {
-        # Add color metadata
-        $result2 | Add-Member -MemberType NoteProperty -Name "Color" -Value $test.Color -Force
-        $Results += $result2
+    # Test against Cloudflare (Skip DoQ)
+    if ($test.Type -ne "DoQ") {
+        $targetCF = if ($test.Type -eq "DoT") { $DOT_SERVER_CF } else { $DOH_SERVER_CF }
+        $result2 = Run-Test -Server $targetCF -Type $test.Type -Protocol $test.Protocol -Concurrency $test.Concurrency -TestName $test.Name
+        if ($null -ne $result2) {
+            # Add color metadata
+            $result2 | Add-Member -MemberType NoteProperty -Name "Color" -Value $test.Color -Force
+            $Results += $result2
+        }
+        Start-Sleep -Seconds 2
     }
-    Start-Sleep -Seconds 2
 }
 
 # ========================================
