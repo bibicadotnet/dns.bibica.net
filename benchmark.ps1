@@ -59,11 +59,11 @@ if (-not (Test-Path $dnspyreExe)) {
 # DEFINE TEST SCENARIOS
 # ========================================
 $Tests = @(
-    @{Name="DoH HTTP/1.1"; Protocol="1.1"; Type="DoH"; Concurrency=1; Color="Cyan"},
-    @{Name="DoH HTTP/2"; Protocol="2"; Type="DoH"; Concurrency=1; Color="Yellow"},
-    @{Name="DoH HTTP/3"; Protocol="3"; Type="DoH"; Concurrency=1; Color="Magenta"},
-    @{Name="DoT"; Protocol=$null; Type="DoT"; Concurrency=1; Color="Green"},
-    @{Name="DoQ"; Protocol=$null; Type="DoQ"; Concurrency=1; Color="Blue"}
+    @{Name="DoH HTTP/1.1"; Protocol="1.1"; Type="DoH"; Concurrency=5; Color="Cyan"},
+    @{Name="DoH HTTP/2"; Protocol="2"; Type="DoH"; Concurrency=5; Color="Yellow"},
+    @{Name="DoH HTTP/3"; Protocol="3"; Type="DoH"; Concurrency=5; Color="Magenta"},
+    @{Name="DoT"; Protocol=$null; Type="DoT"; Concurrency=5; Color="Green"},
+    @{Name="DoQ"; Protocol=$null; Type="DoQ"; Concurrency=5; Color="Blue"}
 )
 
 # ========================================
