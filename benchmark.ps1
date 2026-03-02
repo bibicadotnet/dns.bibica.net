@@ -2,15 +2,17 @@
 # DNS DoH BENCHMARK - REALISTIC TESTS
 # ========================================
 clear
-$DOH_SERVER     = "https://dns.bibica.net/dns-query"
-$DOH_SERVER_CF  = "https://1.1.1.1/dns-query"
-$DOT_SERVER     = "dns.bibica.net:853"
-$DOT_SERVER_CF  = "1.1.1.1:853"
-$DOQ_SERVER     = "quic://dns.bibica.net:853"
-$DURATION       = "5s"
-$INSTALL_DIR    = "C:\dns-bibica-net"
-$OUTPUT_DIR     = "$INSTALL_DIR\results"
-$TIMESTAMP      = Get-Date -Format "yyyyMMdd_HHmmss"
+$DOH_SERVER      = "https://dns.bibica.net/dns-query"
+$DOH_SERVER_CF   = "https://1.1.1.1/dns-query"
+$DOT_SERVER      = "dns.bibica.net:853"
+$DOT_SERVER_CF   = "1.1.1.1:853"
+$DOQ_SERVER      = "quic://dns.bibica.net:853"
+$DURATION        = "5s"
+$INSTALL_DIR     = "C:\dns-bibica-net"
+$OUTPUT_DIR      = "$INSTALL_DIR\results"
+$TIMESTAMP       = Get-Date -Format "yyyyMMdd_HHmmss"
+
+$BIBICA_IP = ([System.Net.Dns]::GetHostAddresses("dns.bibica.net") | Where-Object { $_.AddressFamily -eq 'InterNetwork' } | Select-Object -First 1).IPAddressToString
 
 # ========================================
 # CREATE OUTPUT DIRECTORY
@@ -59,11 +61,13 @@ if (-not (Test-Path $dnspyreExe)) {
 # DEFINE TEST SCENARIOS
 # ========================================
 $Tests = @(
-    @{Name="DoH HTTP/1.1"; Protocol="1.1"; Type="DoH"; Concurrency=5; Color="Cyan"},
-    @{Name="DoH HTTP/2"; Protocol="2"; Type="DoH"; Concurrency=5; Color="Yellow"},
-    @{Name="DoH HTTP/3"; Protocol="3"; Type="DoH"; Concurrency=5; Color="Magenta"},
-    @{Name="DoT"; Protocol=$null; Type="DoT"; Concurrency=5; Color="Green"},
-    @{Name="DoQ"; Protocol=$null; Type="DoQ"; Concurrency=5; Color="Blue"}
+    @{Name="Plain UDP"; Protocol=$null; Type="UDP"; Concurrency=1; Color="White"},
+    @{Name="Plain TCP"; Protocol=$null; Type="TCP"; Concurrency=1; Color="Gray"},
+    @{Name="DoH HTTP/1.1"; Protocol="1.1"; Type="DoH"; Concurrency=1; Color="Cyan"},
+    @{Name="DoH HTTP/2"; Protocol="2"; Type="DoH"; Concurrency=1; Color="Yellow"},
+    @{Name="DoH HTTP/3"; Protocol="3"; Type="DoH"; Concurrency=1; Color="Magenta"},
+    @{Name="DoT"; Protocol=$null; Type="DoT"; Concurrency=1; Color="Green"},
+    @{Name="DoQ"; Protocol=$null; Type="DoQ"; Concurrency=1; Color="Blue"}
 )
 
 # ========================================
@@ -169,7 +173,6 @@ function Run-Test {
 
     $serverName = ($Server -replace 'https://|quic://', '') -split '[:/]' | Select-Object -First 1
 
-    # Sanitize filename - remove ALL special characters including dots
     $sanitizedTestName = $TestName -replace '[^a-zA-Z0-9]', '_'
     $sanitizedServer = $serverName -replace '[^a-zA-Z0-9]', '_'
     $fileTimestamp = Get-Date -Format "yyyyMMdd_HHmmss_fff"
@@ -182,15 +185,14 @@ function Run-Test {
     $args = "--server $Server --duration $DURATION --concurrency $Concurrency --no-progress --no-distribution $domain"
     if ($Type -eq "DoH") { $args += " --doh-protocol $Protocol" }
     elseif ($Type -eq "DoT") { $args += " --dot" }
+    elseif ($Type -eq "TCP") { $args += " --tcp" }
 
     Write-Host "Command: dnspyre $args" -ForegroundColor DarkGray
     Write-Host ""
 
-    # Fix Invoke-Expression syntax error
     $fullCmd = "& `"$dnspyreExe`" $args"
     $output = Invoke-Expression "$fullCmd 2>&1"
     
-    # Ensure output directory exists before writing
     if (-not (Test-Path $OUTPUT_DIR)) {
         New-Item -ItemType Directory -Path $OUTPUT_DIR -Force | Out-Null
     }
@@ -218,22 +220,18 @@ Write-Host "STARTING BENCHMARK TESTS" -ForegroundColor Yellow
 Write-Host "========================================`n" -ForegroundColor Yellow
 
 foreach ($test in $Tests) {
-    # Test against bibica.net
-    $targetBibica = if ($test.Type -eq "DoT") { $DOT_SERVER } elseif ($test.Type -eq "DoQ") { $DOQ_SERVER } else { $DOH_SERVER }
+    $targetBibica = if ($test.Type -eq "DoT") { $DOT_SERVER } elseif ($test.Type -eq "DoQ") { $DOQ_SERVER } elseif ($test.Type -eq "DoH") { $DOH_SERVER } else { $BIBICA_IP }
     $result1 = Run-Test -Server $targetBibica -Type $test.Type -Protocol $test.Protocol -Concurrency $test.Concurrency -TestName $test.Name
     if ($null -ne $result1) {
-        # Add color metadata
         $result1 | Add-Member -MemberType NoteProperty -Name "Color" -Value $test.Color -Force
         $Results += $result1
     }
     Start-Sleep -Seconds 2
 
-    # Test against Cloudflare (Skip DoQ)
     if ($test.Type -ne "DoQ") {
-        $targetCF = if ($test.Type -eq "DoT") { $DOT_SERVER_CF } else { $DOH_SERVER_CF }
+        $targetCF = if ($test.Type -eq "DoT") { $DOT_SERVER_CF } elseif ($test.Type -eq "DoH") { $DOH_SERVER_CF } else { "1.1.1.1" }
         $result2 = Run-Test -Server $targetCF -Type $test.Type -Protocol $test.Protocol -Concurrency $test.Concurrency -TestName $test.Name
         if ($null -ne $result2) {
-            # Add color metadata
             $result2 | Add-Member -MemberType NoteProperty -Name "Color" -Value $test.Color -Force
             $Results += $result2
         }
@@ -247,7 +245,6 @@ foreach ($test in $Tests) {
 if ($Results.Count -eq 0) {
     Write-Host "`nWARNING: No results to export!" -ForegroundColor Yellow
 } else {
-    # Ensure output directory exists
     if (-not (Test-Path $OUTPUT_DIR)) {
         New-Item -ItemType Directory -Path $OUTPUT_DIR -Force | Out-Null
     }
@@ -255,7 +252,6 @@ if ($Results.Count -eq 0) {
     $csvFile = "$OUTPUT_DIR\benchmark_results_${TIMESTAMP}.csv"
     
     try {
-        # Export all fields including Errors to CSV
         $Results | Select-Object TestName, Server, QPS, Mean, P50, P95, P99, Errors | Export-Csv -Path $csvFile -NoTypeInformation -Encoding UTF8 -Force
     }
     catch {
@@ -272,7 +268,6 @@ if ($Results.Count -gt 0) {
     Write-Host "BENCHMARK RESULTS SUMMARY" -ForegroundColor Yellow
     Write-Host "========================================`n" -ForegroundColor Yellow
 
-    # Optimized column widths: Test=15, Server=15, Numbers=9 each
     $tableHeader = "{0,-15} {1,-15} {2,9} {3,9} {4,9} {5,9} {6,9}" -f "Test Scenario", "Server", "QPS", "Mean", "p50", "p95", "p99"
     $tableSeparator = "-" * 81
 
@@ -280,12 +275,13 @@ if ($Results.Count -gt 0) {
     Write-Host $tableSeparator -ForegroundColor DarkGray
 
     foreach ($result in $Results) {
-        # Use the color assigned to this test scenario
         $color = if ($result.Color) { $result.Color } else { "White" }
         
-        # Display row with optimized spacing
+        $displayServer = $result.Server
+        if ($displayServer -eq $BIBICA_IP) { $displayServer = "dns.bibica.net" }
+        
         $row = "{0,-15} {1,-15} {2,9} {3,9} {4,9} {5,9} {6,9}" -f `
-            $result.TestName, $result.Server, $result.QPS, $result.Mean, $result.P50, $result.P95, $result.P99
+            $result.TestName, $displayServer, $result.QPS, $result.Mean, $result.P50, $result.P95, $result.P99
         Write-Host $row -ForegroundColor $color
     }
 
@@ -306,9 +302,8 @@ if ($Results.Count -gt 0) {
 # ========================================
 if (Test-Path $INSTALL_DIR) {
     try {
-        # Wait a bit to ensure all file handles are released
         Start-Sleep -Seconds 1
-        Remove-Item -Path $INSTALL_DIR -Recurse -Force -ErrorAction Stop
+        Get-ChildItem -Path $INSTALL_DIR -Exclude "results" | Remove-Item -Recurse -Force -ErrorAction Stop
     }
     catch {
         Write-Host "WARNING: Could not delete $INSTALL_DIR" -ForegroundColor Yellow
