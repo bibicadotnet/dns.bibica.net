@@ -19,7 +19,7 @@ $dnsproxyServiceName = "dnsproxy-service"
 $winwsServiceName = "winws-service"
 
 Write-Host ""
-Write-Host "dns.bibica.net DoH & DPI bypass - Auto Installer" -ForegroundColor Cyan
+Write-Host "dns.bibica.net DoH/DoT/DoQ/DoH3 & DPI bypass - Auto Installer" -ForegroundColor Cyan
 Write-Host ""
 
 # ==================== Functions ====================
@@ -790,7 +790,7 @@ Write-Host "========================================" -ForegroundColor Cyan
 Write-Host "Installation complete!" -ForegroundColor Green
 Write-Host "========================================" -ForegroundColor Cyan
 Write-Host ""
-Write-Host "System DNS: 127.0.0.1 (dns.bibica.net DoH + Zapret DPI bypass)" -ForegroundColor White
+Write-Host "System DNS: 127.0.0.1 (dns.bibica.net DoH/DoT/DoQ/DoH3 + Zapret DPI bypass)" -ForegroundColor White
 Write-Host "Services: Running and will auto-start on boot" -ForegroundColor Green
 Write-Host ""
 Write-Host "Install location: $installPath" -ForegroundColor Gray
