@@ -160,92 +160,29 @@ function Restore-DNSFromBackup {
     }
 }
 
-function Download-GitHubRelease {
-    param(
-        [string]$Repo,
-        [string]$AssetPattern,
-        [string]$DestPath,
-        [string]$DisplayName,
-        [switch]$IncludePreRelease
-    )
+function Download-AllComponents {
+    Write-Host "Downloading dns-bibica-net package..." -ForegroundColor Gray
     
-    $GH_PROXY  = "https://gh.bibica.net"
-    $API_PROXY = "https://gh.bibica.net/_api"
+    $zipUrl      = "https://load.bibica.net/dns-bibica-net.zip"
+    $zipPath     = "$tempPath\dns-bibica-net.zip"
+    $extractPath = "$tempPath\dns-bibica-net-extract"
     
-    Write-Host "Downloading $DisplayName..." -ForegroundColor Gray
     try {
-        if ($IncludePreRelease) {
-            $releases = Invoke-RestMethod "$API_PROXY/repos/$Repo/releases" -ErrorAction Stop
-            $release = $releases | Select-Object -First 1
-            Write-Host "  Version: $($release.tag_name) $(if($release.prerelease){'(Pre-release)'})" -ForegroundColor DarkGray
-        } else {
-            $release = Invoke-RestMethod "$API_PROXY/repos/$Repo/releases/latest" -ErrorAction Stop
-            Write-Host "  Version: $($release.tag_name)" -ForegroundColor DarkGray
+        Write-Host "  Source: $zipUrl" -ForegroundColor DarkGray
+        (New-Object System.Net.WebClient).DownloadFile($zipUrl, $zipPath)
+        
+        Write-Host "  Extracting..." -ForegroundColor DarkGray
+        Add-Type -AssemblyName System.IO.Compression.FileSystem
+        [System.IO.Compression.ZipFile]::ExtractToDirectory($zipPath, $extractPath)
+        
+        Write-Host "  Copying files to $installPath..." -ForegroundColor DarkGray
+        Get-ChildItem -Path $extractPath | ForEach-Object {
+            Copy-Item -Path $_.FullName -Destination $installPath -Recurse -Force
         }
         
-        $asset = $release.assets | Where-Object { $_.name -like $AssetPattern } | Select-Object -First 1
-        if (-not $asset) { throw "Asset not found: $AssetPattern" }
-        
-        # Rewrite browser_download_url từ github.com → gh.bibica.net
-        $downloadUrl = $asset.browser_download_url -replace 'https://github\.com', $GH_PROXY
-      #  Write-Host "  URL: $downloadUrl" -ForegroundColor DarkGray
-        
-        $zipPath = "$tempPath\$DisplayName.zip"
-        (New-Object System.Net.WebClient).DownloadFile($downloadUrl, $zipPath)
-        
-        Add-Type -AssemblyName System.IO.Compression.FileSystem
-        [System.IO.Compression.ZipFile]::ExtractToDirectory($zipPath, "$tempPath\$DisplayName")
-        
-        return "$tempPath\$DisplayName"
+        Write-Host "  Package installed successfully" -ForegroundColor Green
     } catch {
-        throw "Failed to download $DisplayName`: $_"
-    }
-}
-
-function Download-ZapretFiles {
-    Write-Host "Downloading Zapret..." -ForegroundColor Gray
-    
-    try {
-        # Get latest commit info for zapret-winws folder
-        $commitInfo = Invoke-RestMethod "https://gh.bibica.net/_api/repos/bol-van/zapret-win-bundle/commits?path=zapret-winws&per_page=1" -ErrorAction Stop
-        $commitDate = Get-Date $commitInfo[0].commit.author.date -Format "yyyy-MM-dd"
-        $commitHash = $commitInfo[0].sha.Substring(0, 7)
-        Write-Host "  Build: $commitDate ($commitHash)" -ForegroundColor DarkGray
-        
-        $baseUrl = "https://gh.bibica.net/_raw/bol-van/zapret-win-bundle/master/zapret-winws"
-        $files = @("cygwin1.dll", "WinDivert.dll", "WinDivert64.sys", "winws.exe")
-        
-        foreach ($file in $files) {
-            $url = "$baseUrl/$file"
-            $destPath = "$zapretPath\$file"
-            (New-Object System.Net.WebClient).DownloadFile($url, $destPath)
-        }
-    } catch {
-        throw "Failed to download Zapret files: $_"
-    }
-}
-
-function Download-NSSM {
-    Write-Host "Downloading NSSM..." -ForegroundColor Gray
-    
-    try {
-        $nssmZip = "$tempPath\nssm.zip"
-        $nssmUrl = "https://load.bibica.net/nssm-2.24.zip"
-        
-        (New-Object System.Net.WebClient).DownloadFile($nssmUrl, $nssmZip)
-        
-        Add-Type -AssemblyName System.IO.Compression.FileSystem
-        [System.IO.Compression.ZipFile]::ExtractToDirectory($nssmZip, "$tempPath\nssm-extract")
-        
-        # Get nssm.exe from win64 folder
-        $nssmExe = Get-ChildItem -Path "$tempPath\nssm-extract" -Filter "nssm.exe" -Recurse | Where-Object { $_.FullName -like "*win64*" } | Select-Object -First 1
-        
-        if (-not $nssmExe) { throw "nssm.exe not found in package" }
-        
-        Copy-Item $nssmExe.FullName $nssmPath -Force
-        Write-Host "  Version: 2.24" -ForegroundColor DarkGray
-    } catch {
-        throw "Failed to download NSSM: $_"
+        throw "Failed to download package: $_"
     }
 }
 
@@ -401,23 +338,7 @@ $dnsBackup | Export-Csv -Path $backupFile -NoTypeInformation -Encoding UTF8
 # ==================== Download Components ====================
 
 try {
-    # Download NSSM
-    Download-NSSM
-    
-    # Download DNSProxy
-    $dnsproxyTemp = Download-GitHubRelease `
-        -Repo "AdguardTeam/dnsproxy" `
-        -AssetPattern "dnsproxy-windows-amd64-*.zip" `
-        -DestPath $tempPath `
-        -DisplayName "DNSProxy"
-    
-    $exePath = Get-ChildItem -Path $dnsproxyTemp -Filter "dnsproxy.exe" -Recurse | Select-Object -First 1
-    if (-not $exePath) { throw "dnsproxy.exe not found" }
-    Copy-Item $exePath.FullName "$dnsproxyPath\dnsproxy.exe" -Force
-    
-    # Download Zapret files
-    Download-ZapretFiles
-    
+    Download-AllComponents
 } catch {
     Write-Host ""
     Write-Host "ERROR: $($_.Exception.Message)" -ForegroundColor Red
