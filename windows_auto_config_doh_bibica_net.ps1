@@ -19,7 +19,7 @@ $dnsproxyServiceName = "dnsproxy-service"
 $winwsServiceName = "winws-service"
 
 Write-Host ""
-Write-Host "doh.bibica.net (Serverless Edge DNS Gateway) & DPI bypass - Auto Installer" -ForegroundColor Cyan
+Write-Host "doh.bibica.net Serverless Edge DNS Gateway v2 with Zapret DPI Bypass - Auto Installer" -ForegroundColor Cyan
 Write-Host ""
 
 # ==================== Functions ====================
@@ -355,6 +355,7 @@ listen-addrs:
 listen-ports:
   - 53
 upstream:
+  - h3://doh.bibica.net/dns-query
   - https://doh.bibica.net/dns-query
 bootstrap:  
   - 1.1.1.1:53
@@ -787,7 +788,7 @@ Write-Host "========================================" -ForegroundColor Cyan
 Write-Host "Installation complete!" -ForegroundColor Green
 Write-Host "========================================" -ForegroundColor Cyan
 Write-Host ""
-Write-Host "System DNS: 127.0.0.1 (doh.bibica.net Serverless Edge DNS Gateway + Zapret DPI bypass)" -ForegroundColor White
+Write-Host "System DNS: 127.0.0.1 (doh.bibica.net Serverless Edge DNS Gateway v2 with Zapret DPI Bypass)" -ForegroundColor White
 Write-Host "Services: Running and will auto-start on boot" -ForegroundColor Green
 Write-Host ""
 Write-Host "Install location: $installPath" -ForegroundColor Gray
