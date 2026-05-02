@@ -361,6 +361,8 @@ bootstrap:
   - 1.1.1.1:53
   - 8.8.8.8:53
 cache: false
+#edns: true
+#edns-addr: "1.32.226.255"
 "@ | Out-File "$dnsproxyPath\config.yaml" -Encoding UTF8
 
 New-Item -ItemType File -Path "$dnsproxyPath\dnsproxy.log" -Force | Out-Null
