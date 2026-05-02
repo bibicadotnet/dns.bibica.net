@@ -362,7 +362,10 @@ bootstrap:
   - 8.8.8.8:53
 cache: false
 #edns: true
-#edns-addr: "1.32.226.255"
+#edns-addr: "1.32.226.0"    # Japan
+#edns-addr: "212.165.2.0"   # Sing
+#edns-addr: "2.20.40.0"     # Hong Kong
+#edns-addr: "3.2.88.0"      # Thai Lan
 "@ | Out-File "$dnsproxyPath\config.yaml" -Encoding UTF8
 
 New-Item -ItemType File -Path "$dnsproxyPath\dnsproxy.log" -Force | Out-Null
