@@ -383,6 +383,11 @@ steampowered.com
 www.steampowered.com
 store.steampowered.com
 help.steampowered.com
+steamusercontent.com
+community.fastly.steamstatic.com
+images.steamusercontent.com
+api.steampowered.com
+steamstatic.com
 rsload.net
 www.xvideos.com
 xvideos.com
