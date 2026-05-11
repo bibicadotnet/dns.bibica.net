@@ -355,7 +355,6 @@ listen-addrs:
 listen-ports:
   - 53
 upstream:
-  - h3://doh.bibica.net/dns-query
   - https://doh.bibica.net/dns-query
 bootstrap:  
   - 1.1.1.1:53
