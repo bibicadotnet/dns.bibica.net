@@ -416,6 +416,7 @@ sextop1.sale
 youporn.com
 www.wattpad.com
 mangadex.org
+fitgirl-repacks.site
 "@ | Out-File "$zapretPath\blacklist.txt" -Encoding UTF8
 
 # BAT restart script (for manual restart after config changes)
