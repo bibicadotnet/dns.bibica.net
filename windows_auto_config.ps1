@@ -359,9 +359,11 @@ upstream:
   - tls://dns.bibica.net
   - h3://dns.bibica.net/dns-query
   - quic://dns.bibica.net
-bootstrap:  
-  - 1.1.1.1:53
-  - 8.8.8.8:53
+bootstrap:
+  - 1.1.1.1
+  - 8.8.8.8
+  - 9.9.9.9
+  - 208.67.222.222
 cache: false
 "@ | Out-File "$dnsproxyPath\config.yaml" -Encoding UTF8
 
