@@ -72,14 +72,20 @@ function Wait-ServiceStarted {
 }
 
 function Test-LocalDNS {
-    param([int]$TimeoutSeconds = 5)
+    param([int]$TimeoutSeconds = 10)
     
-    try {
-        $result = Resolve-DnsName -Name "google.com" -Server "127.0.0.1" -DnsOnly -ErrorAction Stop -QuickTimeout
-        return ($null -ne $result)
-    } catch {
-        return $false
+    $stopwatch = [System.Diagnostics.Stopwatch]::StartNew()
+    while ($stopwatch.Elapsed.TotalSeconds -lt $TimeoutSeconds) {
+        try {
+            $result = Resolve-DnsName -Name "google.com" -Server "127.0.0.1" -DnsOnly -ErrorAction Stop -QuickTimeout
+            if ($null -ne $result) {
+                return $true
+            }
+        } catch {
+            Start-Sleep -Milliseconds 500
+        }
     }
+    return $false
 }
 
 function Unload-WinDivertDriver {
