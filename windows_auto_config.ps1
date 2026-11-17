@@ -425,6 +425,9 @@ mangadex.org
 fitgirl-repacks.site
 voatiengviet.com
 voz.vn
+rou.video
+linkedin.com
+www.linkedin.com
 "@ | Out-File "$zapretPath\blacklist.txt" -Encoding UTF8
 
 # BAT restart script (for manual restart after config changes)
